@@ -23,6 +23,7 @@ Convenciones y decisiones de estilo/arquitectura acordadas con el usuario para e
 ## Tooltips y feedback de UI
 
 - **Nunca usar el atributo `title`** de HTML (tooltips nativos del navegador) en ningún elemento de KneOS. No encaja con la estética CRT retro. Si se necesita dar una pista visual, usar una afordancia visual (badge, ícono, label) en vez de un tooltip.
+- **Nunca usar `window.confirm()`/`alert()`/`prompt()`** nativos — mismo motivo, rompen la estética. Para confirmar una acción destructiva (ej. "Vaciar papelera", ver [[RecycleBin]]), usar un `ContextMenu` más con las opciones (ej. "Sí, vaciar" / "Cancelar") en vez de un diálogo del navegador — mismo idioma visual que ya usa el resto del sistema para cualquier decisión del usuario (2026-07-31).
 - Cuando una acción del usuario falla en resolverse (ej. una ruta escrita en la barra de direcciones del Folder no existe), **no mostrar ningún indicador de error** — nada de mensajes, bordes rojos, animaciones de shake, etc. Simplemente dejar la UI/input tal cual, sin cambios, para que el usuario pueda corregir y reintentar.
 
 ## Documentación

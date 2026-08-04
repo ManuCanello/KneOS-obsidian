@@ -49,6 +49,7 @@ graph TD
     F --> F4[Doom]
     F --> F5[Kmd]
     F --> F6[Kfruit]
+    F --> F7[Maxwell]
 
     class A internal-link;
     class B internal-link;
@@ -66,7 +67,7 @@ graph TD
 - [[Backend]] — Express/Prisma/PostgreSQL, esquema de BD y los 6 dominios expuestos
 - [[Frontend Core]] — infraestructura del escritorio simulado (ventanas, grid, menús, taskbar)
 - [[Frontend Model Services Utils]] — datos estáticos, clientes HTTP y helpers
-- [[Apps]] — las 6 apps de escritorio (TxtFile, Folder, KneAI, Doom, Kmd, Kfruit)
+- [[Apps]] — las 7 apps de escritorio (TxtFile, Folder, KneAI, Doom, Kmd, Kfruit, Maxwell)
 - [[Escena 3D]] — cómo se proyecta el iframe de KneOS sobre la pantalla de la PC 3D (Three.js)
 - [[Deuda Técnica]] — bugs, inconsistencias y dependencias sin usar detectados en la exploración
 

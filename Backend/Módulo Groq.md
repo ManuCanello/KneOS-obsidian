@@ -38,7 +38,11 @@ Proxy hacia la [API de Groq](https://groq.com/) (modelo `llama-3.3-70b-versatile
 
 ## Consumido por
 
-Servicio frontend [[Frontend Model Services Utils#Services|Groq.js]] (`window.groq`, instancia global creada en `KNEOS.js`), usado por [[KneAI]] para responder mensajes (`ask`) y auto-titular chats nuevos (`getTitle`).
+Servicio frontend [[Frontend Model Services Utils#Services|Groq.js]] (`window.groq`, instancia global creada en `KNEOS.js`), usado por:
+- [[KneAI]] para responder mensajes (`ask`, con historial) y auto-titular chats nuevos (`getTitle`).
+- [[TxtFile]] (desde 2026-07-30) para dos botones del editor, ambos con `ask` sin historial (`chatHistory=[]`, cada pedido independiente):
+  - Botón general: la respuesta se previsualiza en un popup (Aceptar/Volver/Cancelar) antes de insertarse al final de la nota — no se agrega automáticamente ni queda en una burbuja de chat.
+  - Menú contextual "Preguntarle a KneAI" (click derecho, solo aparece con texto seleccionado): la respuesta reemplaza directamente el fragmento seleccionado, sin preview ni confirmación — el prompt de sistema es distinto (reescribe un fragmento dado según una instrucción, en vez de responder libremente).
 
 > [!warning] El cliente frontend no maneja errores
 > A diferencia de los demás servicios, `Groq.js` (frontend) no tiene try/catch propio — un fallo de red o `!response.ok` se propaga como excepción no controlada hacia `KneAI.js`. Ver [[Deuda Técnica]].

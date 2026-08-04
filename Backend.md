@@ -39,13 +39,13 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 | Tabla              | PK              | Campos clave                                                                 | Relaciones |
 |--------------------|-----------------|-------------------------------------------------------------------------------|------------|
 | `sessions`         | `pc_id`         | `creation_date`                                                                | 1–N con `kneai_chats`, `kneai_messages`, `kfruit_keybinds` |
-| `icons`            | `id_icon`       | `name`, `ext`, `src`, `desktop_place`, `pc_id`, `parent_id`, `size`, `fav`, timestamps | self-relation vía `parent_id` (jerarquía carpetas); 1–1 con `txt` |
-| `txt`              | `id_icon`       | `txtcontent`                                                                   | 1–1 con `icons` (comparte PK) |
+| `files` (ex `icons`, 2026-07-29) | `id_icon`       | `name`, `ext`, `src`, `desktop_place`, `pc_id`, `parent_id`, `size`, `fav`, timestamps | self-relation vía `parent_id` (jerarquía carpetas); 1–1 con `txt` |
+| `txt`              | `id_icon`       | `txtcontent`                                                                   | 1–1 con `files` (comparte PK) |
 | `kfruit_keybinds`  | `id_keybinds`   | `pc_id`, `moveleft` (def. `ArrowLeft`), `moveright` (def. `ArrowRight`), `drop` (def. `ArrowDown;Space`) | N–1 con `sessions` |
 | `kfruit_score`     | `id_score`      | `name`, `score`                                                                | ninguna — leaderboard global anónimo |
 | `kneai_chats`      | `chat_id`       | `pc_id`, `chat_name`, `created_at`                                             | 1–N con `kneai_messages` |
 | `kneai_messages`   | `message_id`    | `chat_id`, `role` (enum `user`\|`system`), `message`, `pc_id?`                 | N–1 con `kneai_chats` |
-| `folder_styles`    | `folder_style_id` | `folder_id` (**`@unique`**, 2026-07-28), `folder_view` (Int, FK), `folder_group_by` (Int, FK), `folder_group_order` (**VarChar**, "asc"/"desc") | N–1 con `icons` (vía `folder_id`); N–1 con `folder_group_by` (FK `folder_styles_folder_group_by_fk`); N–1 con `folder_views` (FK `folder_styles_folder_views_fk`) |
+| `folder_styles`    | `folder_style_id` | `folder_id` (**`@unique`**, 2026-07-28), `folder_view` (Int, FK), `folder_group_by` (Int, FK), `folder_group_order` (**VarChar**, "asc"/"desc") | N–1 con `files` (vía `folder_id`); N–1 con `folder_group_by` (FK `folder_styles_folder_group_by_fk`); N–1 con `folder_views` (FK `folder_styles_folder_views_fk`) |
 | `folder_group_by`  | `folder_group_by_id` | `folder_group_by_desc`                                                 | 1–N con `folder_styles` |
 | `folder_views`     | `folder_view_id` | `folder_view_desc`                                                         | 1–N con `folder_styles` — catálogo de "Íconos grandes"/"Íconos pequeños"/"Lista" |
 
@@ -61,7 +61,10 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 > [!success] `kfruit_score.id_score` ahora tiene PK real (2026-07-27)
 > Se confirmó vía `pg_constraint` que la tabla no tenía ninguna PRIMARY KEY, solo el `UNIQUE` (`kfruit_score_unique`). Se hizo `ALTER TABLE` para dropear el unique y agregar `PRIMARY KEY (id_score)`, y se re-introspeccionó — el schema ahora dice `@id` en vez de `@unique`. Ver [[Deuda Técnica]].
 
-`icons.parent_id` modela archivos/carpetas anidados con `onDelete: NoAction` a nivel de FK — el borrado en cascada real se resuelve a mano en `deleteIcon`/`deleteIconRecursivo` (ver [[Módulo Icon]], resuelto 2026-07-27).
+`files.parent_id` modela archivos/carpetas anidados con `onDelete: NoAction` a nivel de FK — el borrado en cascada real se resuelve a mano en `deleteIcon`/`deleteIconRecursivo` (ver [[Módulo Icon]], resuelto 2026-07-27).
+
+> [!info] Tabla `icons` renombrada a `files` (2026-07-29)
+> Ver la nota completa en [[Módulo Icon]] — rutas/archivos/funciones del backend conservan el nombre viejo ("icon"), solo cambió el nombre de tabla/modelo Prisma.
 
 `kfruit_keybinds.drop` admite múltiples teclas separadas por `;` (p. ej. `"ArrowDown;Space"`).
 

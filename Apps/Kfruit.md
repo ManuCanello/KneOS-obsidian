@@ -8,14 +8,14 @@ tags:
 
 ⬅️ Volver a [[Apps]]
 
-`public/KneOS/js/apps/Kfruit.js` (clase `KFruit`) — extiende [[File]]. Extensión `"kfruit"`, ícono `sources/icon/kneAi.png` (reutiliza el de KneAI — placeholder, sin ícono propio todavía), `src = null`.
+`public/KneOS/js/apps/Kfruit.js` (clase `KFruit`) — extiende [[File]]. Extensión `"kfruit"`, ícono `sources/appIcon/kneAi.png` (reutiliza el de KneAI — placeholder, sin ícono propio todavía), `src = null`.
 
 > [!abstract] Qué hace
 > Menú principal en modo "terminal ASCII" (logo dibujado con `<pre>`) con tres opciones: **Iniciar Juego** (caída y fusión de frutas con física real, estilo Suika Game/2048 de frutas — se sueltan frutas que caen y, al chocar dos del mismo nivel, se fusionan en la fruta del nivel siguiente sumando puntos, hasta la Sandía), **Configuración** (rebindeo de teclas: mover izquierda/derecha y soltar, 2 teclas por acción) y **Calificaciones** (leaderboard tipo arcade). Al perder, pantalla de Game Over donde se ingresan 3 iniciales para guardar el puntaje.
 
 ## Constructor(name)
 
-`super()`; `body=null` (contenedor raíz, reasignado dinámicamente); `_kfruitServices = new KfruitServices()`; keybinds default: `moveLeft=["ArrowLeft"]`, `moveRight=["ArrowRight"]`, `drop=["ArrowDown","Space"]`.
+`super()`; `body=null` (contenedor raíz, reasignado dinámicamente); `_kfruitServices = new KfruitServices()`; keybinds default: `moveLeft=["ArrowLeft"]`, `moveRight=["ArrowRight"]`, `drop=["ArrowDown","Space"]`. Desde 2026-07-29, `super()` pasa además un `size` inicial de `3_250_000` bytes (~3.1 MB, incluye el motor físico planck), que ahora sí se persiste al crear el ícono — ver la nota de `size` en [[File]]. Desde 2026-07-31 pasa `FileType.GAME` (ver [[File]]) en el lugar del viejo parámetro `direction`.
 
 ## Frutas (`FRUITS`, modelo [[Frontend Model Services Utils#Model|KfruitFruit]])
 
@@ -44,6 +44,9 @@ Usa **planck** (`World`, `Circle`, `Chain`, importado vía import map como `plan
 - **Render**: Canvas 2D puro, conversión metros↔píxeles (`PPM=6`), `drawShape` según tipo de fixture, `drawTitulo()` dibuja el logo ASCII de fondo.
 - **Loop** (`requestAnimationFrame`, `timeStep=1/60`): step físico, destruye/crea cuerpos pendientes, mueve la fruta activa según `moveDir`, renderiza.
 - **Controles**: `keydownListener`/`keyupListener` (mueve/suelta según `moveLeft`/`moveRight`/`drop`), `dropBall()` (convierte el cuerpo a dinámico, activa colisión real).
+
+> [!bug] El loop y los listeners de teclado nunca se detenían — ni al cerrar la ventana (2026-08-03, resuelto)
+> Encontrado investigando el lag reportado en Chrome (ver [[Deuda Técnica]]). A diferencia de [[Maxwell]] (que ya cortaba su loop al detectar `!container.isConnected`), acá no había **ningún** chequeo: cerrar la ventana sacaba el `<canvas>` del DOM pero el loop de física seguía llamando `requestAnimationFrame` para siempre, y `keydownListener`/`keyupListener` (registrados en `window`, no en el canvas) nunca se sacaban — cada partida nueva sumaba otro loop y otro par de listeners más, encima de los anteriores. Fix: `loop()` ahora chequea `canvas.isConnected` al principio de cada frame — si es `false`, llama a `detenerJuego()` (saca los listeners de `window` y desconecta el `ResizeObserver`) y corta. También pausa (sin cortar el loop, para poder reanudar solo) cuando `canvas.offsetParent === null` — ventana minimizada, `display:none` en algún ancestro.
 - **`_createCircle(pos, fruitDef)`**: cuerpo dinámico para la fruta resultante de una fusión (a diferencia de `_createBall`, que crea el estático controlable).
 
 ## Otras funciones de UI del juego

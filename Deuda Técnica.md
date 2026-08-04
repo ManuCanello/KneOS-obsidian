@@ -10,9 +10,6 @@ tags:
 
 Hallazgos transversales de la exploración del código, útiles para priorizar mejoras.
 
-> [!note] Apps sin terminar
-> Solo [[Kmd]] (terminal) sigue siendo un stub vacío (confirmado 2026-07-27, sin cambios).
-
 > [!info] `lampara.glb` sigue huérfano (confirmado 2026-07-27)
 > `public/models/lampara.glb` existe pero no se carga en ninguna parte de [[Escena 3D]] ni en ningún `.js` del proyecto. El usuario decidió dejarlo así (tenía pensado usarlo más adelante) — no remover sin preguntar de nuevo.
 
@@ -25,11 +22,23 @@ Hallazgos transversales de la exploración del código, útiles para priorizar m
 
 ## Resueltos
 
+> [!success] Lag del visor 3D en Chrome — diagnosticado con trazas de Performance y resuelto (2026-08-03)
+> El usuario reportaba que el portfolio andaba fluido en el visor embebido de VS Code pero lageaba en Chrome real, más notorio con varias ventanas de KneOS abiertas (caía a ~30fps). Se diagnosticó con 4 grabaciones sucesivas de DevTools Performance (`chrome://` Performance tab, no herramienta de automatización — no hay MCP de browser en este entorno) comparadas entre sí:
+> - **Trace 1 (baseline)**: proceso GPU al **99.46%** de ocupación, ~724 `GPUTask`/seg propios de la pestaña, 17 tareas GPU largas (>50ms). El main thread de JS nunca estuvo saturado (~17%) — el cuello de botella era GPU/compositing, no JavaScript.
+> - **Causa raíz real**: `public/js/main.js` (`animate()`) renderizaba la escena completa (WebGL + CSS3D) **sin parar, 60 veces por segundo, para siempre**, aunque la cámara estuviera quieta y no hubiera pasado nada — sobre una arquitectura ya cara de por sí ([[Escena 3D]]: `<iframe>` completo del escritorio KneOS montado como `CSS3DObject` dentro de la escena WebGL).
+> - **Peor hallazgo puntual**: [[Kfruit]] arrancaba su loop de física (`world.step` vía `requestAnimationFrame`) y sus listeners de teclado en `window` (global) **sin ningún chequeo de si la ventana seguía abierta** — a diferencia de [[Maxwell]], que sí cortaba al cerrar. Cerrar el juego (o jugar varias partidas) dejaba loops y listeners acumulándose en segundo plano para siempre.
+> - **Fixes aplicados**: (1) render bajo demanda en `main.js` — un flag `needsRender` seteado solo por el evento `change` de `OrbitControls` (que three.js solo emite cuando la cámara realmente se movió), por tecla presionada, o por carga del modelo; (2) [[Kfruit]] y [[Maxwell]] pausan su loop cuando la ventana está minimizada (`container.offsetParent === null`) y KFruit ahora sí corta el loop + saca los listeners globales al cerrarse (`canvas.isConnected`); (3) `Window.cerrar()` ahora hace `interact(...).unset()` sobre ventana y barra — interact.js guardaba cada `.draggable()/.resizable()` en un registro propio que no se limpiaba solo al sacar el nodo del DOM (ver [[Window y Taskbar]]); (4) `renderer.dispose()` + `forceContextLoss()` en Maxwell al cerrar, en vez de confiar en que el GC libere el contexto WebGL eventualmente; (5) `devicePixelRatio` capeado a 2x en ambos renderers (`main.js` y Maxwell) — en pantallas 3-4x el fill-rate escala al cuadrado del pixelRatio.
+> - **Resultado medido** (trace 3, misma prueba que el baseline): GPU **99.46% → 25.6%** de ocupación, ~724 → ~211 `GPUTask`/seg, 17 → **0** tareas largas.
+> - **Experimento revertido**: se probó además desactivar `interact.js` (drag/resize) de las ventanas tapadas atrás de otra (solo la ventana al frente quedaba interactiva) para reducir aún más el overhead de puntero con varias ventanas abiertas. Trace 4 mostró **sin ganancia medible** (~211 → ~217 GPU tasks/seg, dentro del ruido) y encima introdujo un bug de UX real: el listener que reactivaba la ventana corría en fase de burbuja sobre `ventana`, pero interact.js escucha `mousedown` directo sobre `barra` (el target) — que se procesa en fase de target, *antes* de que el evento burbujee hasta el listener reactivador. Un click+arrastre en un solo gesto sobre una ventana tapada no arrancaba el drag (hacía falta soltar y volver a agarrar). Se revirtió por completo — sin ganancia que justifique la complejidad ni la rareza de UX.
+
+> [!success] [[Kmd]] implementada: ya no es un stub (2026-07-31)
+> Era el último app placeholder de KneOS (stub vacío, confirmado 2026-07-27). Ahora es una terminal estilo CMD completa operando sobre el sistema de archivos real (no un FS simulado): `dir`/`cd`/`cls`/`tree`/`mkdir`/`rmdir`/`move`/`ren`/`del`/`type`/`echo`/`exit`/`kneai`/`help`. Ver [[Kmd]] para el detalle de implementación (estado en la instancia, resolución de rutas en `kmdPath.js` nuevo, cambios en `DesktopManager`).
+
 > [!success] Validación de entrada agregada a todos los controllers restantes (2026-07-27)
 > Se agregó `utils/validation.js` (helper compartido: `isNonEmptyString`, `isString`, `isValidId`, `isBoolean`) y se aplicó validación de tipo/formato en `iconController.js` (10 endpoints), `txtController.js` (2), `kneAI.js` (5, incluyendo chequeo del enum `role_type`) y `kfruitController.js` (`editKeybinds`/`getUserKeybinds`) — todos devuelven `400` ante datos mal formados en vez de dejarlos pasar a Prisma. Probado end-to-end contra el servidor real: casos válidos e inválidos en los 4 módulos. Ver [[Módulo Icon]], [[Módulo Txt]], [[Módulo KneAI]], [[Módulo Kfruit]], [[Backend]].
 
 > [!success] `ARCHITECTURE.md` corregido: Clock no es un stub (2026-07-27)
-> El repo decía "Clock: stub sin implementar" en dos lugares (descripción de `core/` y árbol de archivos) — se corrigió a la descripción real (reloj + calendario, completo). Kmd sigue correctamente marcado como sin implementar.
+> El repo decía "Clock: stub sin implementar" en dos lugares (descripción de `core/` y árbol de archivos) — se corrigió a la descripción real (reloj + calendario, completo). En ese momento Kmd seguía correctamente marcado como sin implementar; dejó de estarlo el 2026-07-31 (ver entrada de arriba).
 
 > [!success] `html2canvas` removido (2026-07-27)
 > Confirmado que no había ninguna llamada a esa librería en todo el proyecto (`grep` sin resultados fuera del propio `<script>`). Se sacó la etiqueta de `public/index.html`. `lampara.glb` se dejó tal cual (decisión del usuario, tenía pensado usarlo más adelante) — ver nota arriba.

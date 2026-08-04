@@ -30,9 +30,9 @@ Ya seedeada manualmente en la BD:
 
 | `folder_view_id` | `folder_view_desc` | `icon_path` |
 |---|---|---|
-| 1 | Íconos grandes | `sources/icon/file.svg` |
-| 2 | Íconos pequeños | `sources/icon/file.svg` |
-| 3 | Lista | `sources/icon/list.svg` |
+| 1 | Íconos grandes | `sources/appIcon/file.svg` |
+| 2 | Íconos pequeños | `sources/appIcon/file.svg` |
+| 3 | Lista | `sources/accions/list.svg` |
 
 > [!info] `icon_path` (2026-07-28)
 > Columna nueva, `String?` en `prisma/schema.prisma`, sin lógica propia en modelo/controller — viaja tal cual porque `getFolderViewsOptions()` no usa `select`. Guarda solo la *ruta* del ícono; el tamaño con el que se renderiza en el menú lo decide `Folder.js` en el frontend según la vista (`TAMANO_ICONO_VISTA = {grande: 56, pequeno: 28}`), no la BD — por eso "Íconos grandes" e "Íconos pequeños" comparten el mismo `icon_path` (`file.svg`) pero se ven distinto.

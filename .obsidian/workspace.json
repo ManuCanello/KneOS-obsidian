@@ -11,10 +11,14 @@
             "id": "a0e975ef826df478",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "Apps/Contacts.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Contacts"
             }
           }
         ]
@@ -37,7 +41,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Explorador de archivos"
@@ -179,40 +185,40 @@
   },
   "active": "a0e975ef826df478",
   "lastOpenFiles": [
+    "Apps/Kmd.md",
+    "Apps/RecycleBin.md",
+    "Apps/Kmd.md.tmp.32268.a99693694876",
+    "Apps/Kmd.md.tmp.32268.dd0c0a157f37",
+    "Apps.md.tmp.32268.6507f69d2c18",
+    "Apps/Kmd.md.tmp.32268.46af43f9244e",
+    "Apps/Kmd.md.tmp.32268.af7360155693",
+    "Apps/Kmd.md.tmp.32268.7468ea3aeb03",
+    "Apps/Kmd.md.tmp.32268.cdbec9782e12",
+    "Apps.md.tmp.32268.f45970dd7d59",
+    "Apps/Kmd.md.tmp.32268.fd72440294de",
+    "Deuda Técnica.md.tmp.32268.0abab52281b7",
+    "Apps/KneAI.md",
+    "Apps/Maxwell.md",
+    "Apps/Doom.md",
+    "Apps/Folder.md",
+    "Apps/Kfruit.md",
+    "Apps/TxtFile.md",
+    "Deuda Técnica.md",
+    "Backend/Módulo Txt.md",
     "Backend/Módulo Session.md",
     "Arquitectura.md",
     "Reglas/Reglas.md",
-    "Arquitectura.md.tmp.4812.0fcd623d2b63",
-    "Backend.md.tmp.4812.260edfd76ac3",
-    "Backend.md.tmp.4812.eb1aba5b2326",
-    "Backend/Módulo Session.md.tmp.4812.cb6f0d27e4f4",
-    "Backend/Módulo Session.md.tmp.4812.2cbd7b9de867",
     "Backend.md",
     "Apps.md",
-    "Deuda Técnica.md",
-    "Backend/Módulo Folder Styles.md.tmp.4812.3faf59214593",
-    "Deuda Técnica.md.tmp.4812.13290a71409c",
-    "Deuda Técnica.md.tmp.4812.adb7432a4fa8",
-    "Backend/Módulo Txt.md.tmp.4812.5fcc00f3ff91",
-    "Backend/Módulo KneAI.md.tmp.4812.6c1a21df9f39",
     "Core/Clock.md",
     "Backend/Módulo Folder Views.md",
     "Backend/Módulo Folder Styles.md",
     "Frontend Model Services Utils.md",
     "KneOS Portfolio.md",
-    "Apps/TxtFile.md",
-    "Apps/KneAI.md",
-    "Apps/Kmd.md",
-    "Apps/Kfruit.md",
-    "Apps/Folder.md",
-    "Apps/Doom.md",
     "Backend/Módulo Folder Group By.md",
     "Core/Window y Taskbar.md",
     "Core/File.md",
     "Core/Menús Contextuales.md",
-    "Core/Drag and Drop y Selección Múltiple.md",
-    "Core/DesktopManager.md",
-    "Core/DesktopGrid y DesktopFolder.md",
-    "Backend/Módulo Txt.md"
+    "Core/Drag and Drop y Selección Múltiple.md"
   ]
 }

@@ -25,11 +25,11 @@ Persistencia del contenido de archivos de texto ([[TxtFile]]), acoplada al siste
 ## Modelo (`models/txtModel.js`)
 
 - **`saveTxtContent(id_icon, pc_id, txtcontent)`**:
-  1. Verifica ownership (`findFirst` en `icons` por `id_icon` + `pc_id`); si no existe, devuelve `null`.
+  1. Verifica ownership (`findFirst` en `files` — ex `icons`, ver [[Módulo Icon]] — por `id_icon` + `pc_id`); si no existe, devuelve `null`.
   2. Calcula `size = Buffer.byteLength(txtcontent, 'utf8')`.
-  3. Transacción Prisma (`$transaction`) con dos operaciones atómicas: `txt.upsert` (contenido) + `icons.update` (nuevo `size`).
+  3. Transacción Prisma (`$transaction`) con dos operaciones atómicas: `txt.upsert` (contenido) + `files.update` (nuevo `size`, ex `icons.update`).
   4. Devuelve la fila `txt` resultante.
-- **`getTxtContent(id_icon, pc_id)`**: `findFirst` en `txt` filtrando por `id_icon` y relación anidada `icons: {pc_id}` (asegura que solo el dueño lea el contenido), `select: {txtcontent: true}`.
+- **`getTxtContent(id_icon, pc_id)`**: `findFirst` en `txt` filtrando por `id_icon` y relación anidada `icons: {pc_id}` (asegura que solo el dueño lea el contenido), `select: {txtcontent: true}`. El **campo de relación** en el modelo `txt` del schema sigue llamándose `icons` aunque apunta al modelo `files` — Prisma no renombra los nombres de campo de relación al reintrospeccionar, solo el tipo referenciado, así que esto no es un error ni quedó sin actualizar.
 
 > [!info] Acoplamiento con Icon
 > Cada guardado recalcula el tamaño del archivo en bytes UTF-8 y lo persiste junto con el contenido — este `size` alimenta el cálculo recursivo de tamaños de carpetas (`getTamanosAgregados`, ver [[Módulo Icon]]). No se puede crear un `txt` sin un `icon` preexistente, y borrar un icono borra en cascada manual su `txt`.

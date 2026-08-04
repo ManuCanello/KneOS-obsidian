@@ -40,7 +40,7 @@ server.js → routes/ → controllers/ → models/ → db/prisma.js → PostgreS
 - **`routes/`**: definición de endpoints HTTP, sin lógica de negocio.
 - **`controllers/`**: parsean el request, llaman a los modelos y devuelven la respuesta JSON.
 - **`models/`**: acceso a datos vía Prisma Client (`db/prisma.js`), una función por operación.
-- **`prisma/schema.prisma`**: esquema de la base (`sessions`, `icons`, `txt`, `kfruit_keybinds`, `kfruit_score`, `kneai_chats`, `kneai_messages`).
+- **`prisma/schema.prisma`**: esquema de la base (`sessions`, `files` — ex `icons`, renombrada en Postgres el 2026-07-29, ver [[Módulo Icon]] —, `txt`, `kfruit_keybinds`, `kfruit_score`, `kneai_chats`, `kneai_messages`).
 
 Ver detalle completo en [[Backend]].
 
