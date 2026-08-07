@@ -11,10 +11,14 @@
             "id": "a0e975ef826df478",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "Deuda Técnica.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Deuda Técnica"
             }
           }
         ]
@@ -181,6 +185,7 @@
   },
   "active": "a0e975ef826df478",
   "lastOpenFiles": [
+    "Apps/User.md",
     "Frontend Model Services Utils.md",
     "Apps/KneAI.md",
     "Apps/Kmd.md",
@@ -215,7 +220,6 @@
     "Backend/Módulo Folder Group By.md",
     "Core/Window y Taskbar.md",
     "Core/File.md",
-    "Core/Menús Contextuales.md",
-    "Core/Drag and Drop y Selección Múltiple.md"
+    "Core/Menús Contextuales.md"
   ]
 }
