@@ -1,0 +1,49 @@
+---
+tags:
+  - portfolio/kneos
+  - apps
+---
+
+# Hangman
+
+⬅️ Volver a [[Apps]]
+
+`public/KneOS/js/apps/Hangman.js` (clase `Hangman`) — extiende [[File]]. Extensión `"ahorcado"` (2026-08-13: el identificador `ext` persistido en BD no se tradujo, solo el nombre del archivo/clase — ver [[Deuda Técnica#Nombres en español traducidos a inglés (2026-08-13)]]), ícono propio `sources/appIcon/hangman.svg`, `src = null`. Sin `Window` propia: usa la `Window` completa por defecto de `File` (como BlackJack/Kfruit/Kmd), sin tamaño fijo.
+
+> [!abstract] Qué hace
+> Port del Ahorcado de consola original en Java (clases `App`/`Leer`/`Pantalla`, `Juegos Java/ahorcado-master`, 2026-08-12). Mismas 7 vidas y las mismas 8 escenas ASCII del muñeco (`base()` del Java, portadas literal a un array `ESCENAS`, índice = vidas restantes). Menú principal con las mismas dos opciones del original: "PALABRA AL AZAR" y "ESCRIBIR PALABRA". Dentro de la partida, el Scanner de "pedí una letra + validá que sea letra + validá que no la hayas usado" pasó a un abecedario en pantalla que se juega solo con el teclado físico (sin click — pedido explícito): cada letra usada se **pinta y se tacha**, no desaparece.
+
+## Diferencias respecto al Java original
+
+- **Banco de palabras en BD, como catálogo fijo** (2026-08-12): el `palabras.txt` original (256 palabras) pasó a una tabla en BD — reemplaza al array hardcodeado, no agrega ningún comportamiento nuevo. "PALABRA AL AZAR" hace un `SELECT` al azar entre **todas** las filas (`models/hangmanModel.js#getPalabraAlAzar`); no hay ningún flag de "usada" ni lógica para no repetir — es un catálogo estático, igual que `folder_group_by`/`folder_views` (ver [[Módulo Hangman]]), no una bolsa que se consume jugando. Por eso `prisma/reset.sql` (local, gitignored) la deja explícitamente afuera del `TRUNCATE`, mismo motivo que esas dos tablas. Esa tabla (`ahorcado_palabras`) se unificó con la de Kdle en `palabras` (2026-08-13, ver [[Módulo Hangman]]) y se sumaron ~712 palabras nuevas de paso, sin cambiar nada de este comportamiento — sigue siendo cualquier fila al azar, sin filtrar por largo. La tabla se renombró de `palabras` a `words` el mismo día (2026-08-13, ver [[Deuda Técnica#Nombres en español traducidos a inglés (2026-08-13)]]) — solo el esquema, el contenido sigue siendo palabras en español. "ESCRIBIR PALABRA" (la otra opción del menú) sigue sin tocar la BD — juega la palabra tipeada directo, igual que el original.
+- **Abecedario solo teclado, sin click**: `_crearTeclado()` arma 26 `<span>` (`A`-`Z`, no `<button>` — no hay ningún handler de click) en un `Map` letra→elemento (`_teclasEl`). La única entrada es `window.addEventListener("keydown", ...)` en `_iniciarJuego` (mismo patrón que `KFruit._capturarTecla`): tipear una letra dispara `_elegirLetra(letra, el)`, que revela **todas** las apariciones de esa letra en la palabra (igual que `remplazarLetra()` del original) y resta una vida si no había match. `_letrasUsadas` (un `Set`) es lo que evita reelegir una letra ya tipeada. El listener se saca en `_finDeJuego` para no seguir escuchando teclas terminada la partida ni interferir con el `<input>` de "ESCRIBIR PALABRA" en una mano futura.
+- **Letra usada = pintada + tachada**: `.ahTecla--usada` invierte fondo/texto (`background: var(--primary-color)`, `color: var(--primary-background)` — mismo lenguaje visual que `.game-boton:hover`/`.bjBotonPrincipal`) y le suma `text-decoration: line-through` encima.
+- **Vidas debajo, no como header**: `_elVidas` es un `<div class="ahVidas">` ubicado después de `.ahPalabra`, no un header arriba de todo. Orden final: escena → palabra → vidas → abecedario → mensaje → controles.
+- **Todo más grande**: tamaños subidos en `hangman.css` (ex `ahorcado.css`, renombrado 2026-08-13) — `.ahEscena`, `.ahPalabra`, `.ahVidas`, `.ahMensaje`, `.ahTecla` (2.6rem → 3.4rem) y el `h2` de "ESCRIBIR PALABRA".
+  > [!warning] Iteraciones descartadas en el camino (todas 2026-08-12, misma sesión)
+  > Esta app pasó por varias vueltas antes de este estado final, todas por corrección directa del usuario tras una lectura mía equivocada del pedido:
+  > 1. Banco de palabras "cargado a mano" con columna `usada` en la tabla y pantalla "CARGAR PALABRAS" (sin jugar al toque) — el usuario había dicho "las palabras se deben cargar por teclado, y se deben ir tachando cuando se usan" y leí "palabras" como el sujeto; en realidad hablaba de las **letras**. Revertido a un catálogo fijo sin `usada`.
+  > 2. El abecedario tuvo una versión clickeable (`<button>`) que además escuchaba teclado — el usuario pidió sacar el click del todo. Pasó a `<span>` no interactivo.
+  > 3. El abecedario completo (26 letras) se reemplazó por dos listas de solo lo jugado ("Estaban"/"No estaban", port directo de `imprimirLetrasUsadas()`) — pedido explícito de volver al criterio original de consola.
+  > 4. Interpretando mal "volver al modelo de antes todas las palabras", revertí el banco de palabras al array hardcodeado (borrando tabla/rutas/servicio) — el usuario aclaró que eso NO era lo que pedía ("la palabras mostrarlas en la bd"): el pedido era sobre las **letras** de nuevo — volver al abecedario completo (punto 3 revertido), no las palabras. Se restauró la tabla `ahorcado_palabras` (con re-seed de las 256 palabras) y el abecedario de 26 `<span>` pintado/tachado, quedando en el estado descripto arriba.
+  > 
+  > Ver [[feedback_clarify_ambiguous_subject_before_scoping]] — "palabras" vs "letras" fue una ambigüedad recurrente en toda la sesión.
+- **"Temas" (colores ANSI) no se portó**: el original tenía un submenú para pintar el ahorcado de rojo/azul/verde vía códigos ANSI. Se decidió explícitamente no portarlo — la paleta de KneOS es monocromática verde en toda la UI, sin excepciones por app (ver [[feedback_css_monochrome_green_only]]).
+- **Vidas como corazones, sin color de alarma**: `mostrarVidas()` en Java imprimía los corazones en rojo ANSI (`[31m`); acá quedan en el verde monocromo estándar, mismo criterio que el punto anterior.
+- **"Escribir palabra" sin loop de reintento**: el original pedía la palabra por `Scanner` en un `do-while` hasta que pasara `comprobarPalabra()` (solo letras). Acá el botón "Confirmar" arranca deshabilitado y solo se habilita cuando el `<input>` tiene una palabra válida — nunca se muestra un mensaje de error, el botón simplemente no habilita (ver [[feedback_no_error_message_just_stay]]).
+- **Sin `Pantalla.borrarPantalla()`/`esperarTecla()`**: no hace falta un equivalente — cada pantalla ya reconstruye `this.body` entero (`innerHTML = ""` + `append`, mismo patrón que [[BlackJack]]/[[Kfruit]]) y no hay ningún punto donde el original solo esperara un keypress sin acción asociada.
+- **Menú principal**: mismo patrón que BlackJack/Kfruit — `this.body` con clases `"app" "game" "hangmanApp" "mainMenu"` (2026-08-13: clase CSS renombrada de `ahorcadoApp`), logo ASCII "AHORCADO" en `<pre>` (fuente de bloque 5×5 propia, `_getLogoLines()`, mismo esquema que la primera versión de `BlackJack._getLogoLines()`, sin traducir — es contenido visible del juego, no un nombre de archivo). Sin opción "Salir" (cerrar la ventana cumple esa función, igual que en BlackJack/Kfruit).
+
+## `apps/game.css` (estándar compartido)
+
+No define CSS propio para menú/logo/botones/input — todo eso sale de `.game`/`.mainMenu`/`.game-boton`/`.game-fila-botones`/`.game-input` en `apps/game.css` (ver nota de refactor en [[BlackJack]]). `hangman.css` solo tiene lo específico de la pantalla de juego: `.ahEscena` (`<pre>` del muñeco), `.ahPalabra` (blancos de la palabra), `.ahVidas`, `.ahMensaje`, `.ahTeclado`/`.ahTecla`/`.ahTecla--usada` (grilla de `<span>` A-Z + su estado pintado+tachado — con borde/color propios, ya no extiende `.game-boton` porque no es interactivo) y `.ahControles` (botón "Volver al menú" post-partida).
+
+## Jugable por teclado + modo consola (2026-08-14)
+
+El abecedario de juego ya era 100% teclado desde el port original (ver arriba, sigue siendo así — eso no cambió); lo que faltaba eran los **menús**. A pedido explícito (jugar desde `run ahorcado` en [[Kmd]]): `_mostrarMenu()` (PALABRA AL AZAR/ESCRIBIR PALABRA, con un ítem "CERRAR" extra en el modo consola) y el botón "Volver al menú" post-partida pasaron a `File._menuTeclado`; "< VOLVER" en `_mostrarEscribirPalabra()` pasó a `File._escapeVuelve` (ver [[File]]). El listener de letras (`_onKeydown`) pasó de `window.addEventListener` directo a `File._registrarTeclado`/`_desregistrarTeclado`, para quedar cubierto por la limpieza centralizada que usa `Kmd._cmdRun` al salir con Ctrl+C (o "CERRAR") desde cualquier pantalla, no solo al llegar naturalmente a `_finDeJuego`. Cada pantalla de menú tiene su par en modo consola (`_mostrarMenuConsola`, `_mostrarEscribirPalabraConsola` — `this._modoTerminal`).
+
+**Dos correcciones el mismo día:** la primera pasada también le sacó el `click` al botón "Confirmar" de `_mostrarEscribirPalabra()` en el modo desktop (quedó solo con el Enter del `<input>`) — se corrigió sumando `click` ahí y a `_menuTeclado`/`_escapeVuelve` (mouse y teclado conviviendo). A pedido explícito del usuario, horas después esa convivencia se revirtió: el modo desktop volvió a ser **mouse-only, como era originalmente** — `_mostrarMenu()` y `_mostrarEscribirPalabra()` volvieron a `click` directo en cada `<p>`/`<button>` (Confirmar solo dispara con click otra vez, el Enter del `<input>` sigue andando como atajo pero ya no hay ESC en "< VOLVER"), sin `File._menuTeclado`/`_escapeVuelve`. El abecedario de juego (`_crearTeclado`/`_onKeydown`) nunca se tocó en ninguna corrección: siempre fue solo-teclado, en los dos modos, por pedido explícito original.
+
+## Persistencia
+
+Solo el catálogo de palabras (tabla `words`, ex `palabras`, compartida con Kdle, ver [[Módulo Hangman]]) — de solo lectura desde la app. El resto del estado de la partida (vidas, letras reveladas/usadas) vive solo en memoria mientras la ventana está abierta.

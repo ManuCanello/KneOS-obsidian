@@ -13,14 +13,16 @@ Infraestructura del "escritorio" simulado dentro de `public/KneOS/js/core/`. Tod
 
 ## Bootstrap — `KNEOS.js`
 
-Script de entrada (`type="module"`, top-level `await`), cargado desde `public/KneOS/index.html`.
+Script de entrada (`type="module"`, top-level `await`), cargado desde `public/KneOS/index.html` — desde 2026-08-13 vía el bundle local `js/dist/kneos.bundle.js` (ver [[Deuda Técnica#Bundling local de three.js/planck/interactjs (2026-08-13)]]), no directamente.
 
-1. Importa `Groq`, `DesktopManager`, `Clock`, `TaskbarContextMenu` y `obtenerPcId` (de `services/session.js`).
+0. *(2026-08-13)* `import interact from "interactjs"` + `window.interact = interact` — antes `interact` llegaba como global desde un `<script>` de jsdelivr en `public/KneOS/index.html`; ahora que interactjs está bundleado con esbuild, `KNEOS.js` lo expone a mano como global para no tocar cada call-site que sigue llamando `interact(...)` sin import (`Window.js`, etc.).
+1. Importa `Groq`, `DesktopManager`, `Clock`, `TaskbarContextMenu`, `startSession` (de `services/session.js`), `FolderGroupByServices`, `FolderViewsServices`.
 2. Inicializa globales:
    - `window.archivosAbiertos = new Map()` — registro de toda instancia de archivo/carpeta abierta, indexado por `id` de ícono.
    - `window.groq = new Groq()` — cliente único del asistente IA.
-3. `window.pcId = await obtenerPcId()` — bloquea el arranque hasta resolver la sesión ([[Módulo Session]]).
+3. `await startSession()` — bloquea el arranque hasta resolver la sesión ([[Módulo Session]]); carga `window.folderGroupByOptions`/`window.folderViewsOptions`.
 4. Instancia `DesktopManager`, `Clock`, `TaskbarContextMenu`; llama `desktop.iniciar()` y `reloj.iniciar()`.
+5. *(2026-08-13)* Saca (fade-out + remove) el `#loadingScreen` del `index.html` — ver [[Escena 3D#Placeholder de carga con `<img>`, no texto (2026-08-13)]].
 
 ## Clases del core
 

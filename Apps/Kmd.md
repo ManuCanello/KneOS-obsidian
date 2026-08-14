@@ -67,6 +67,7 @@ Detectar "¿esto es una carpeta?" se hace por duck-typing (`typeof archivo._load
 | `exit` | `this.cerrarVentana()` (idéntico a cualquier otro archivo, ver `File.cerrarVentana`). |
 | `kneai` | `window.groq.ask(contexto, texto, this._aiHistory)` (mismo `Groq`/`/groq/chat` global que usa [[KneAI]] y [[TxtFile]]). `null` → mensaje de fallo, sin romper (mismo convenio que esas apps); ojo con el rate limit de 10 req/min por sesión (`groqLimiter`, ver [[Módulo Groq]]). |
 | `curl [-i\|-I] <url>` (2026-07-31, nuevo) | Ver sección propia más abajo. |
+| `run juego` (2026-08-14, nuevo) | Corre ahorcado/kdle/blackjack/flipcoin/tetris/carrera **dentro de la terminal**, sin abrir una `Window` nueva. Ver sección propia más abajo. |
 | `help` | Tabla de texto fija (no derivada de la tabla de despacho interna), para no perder el formato exacto pedido originalmente por el usuario. |
 
 Errores de comando (ruta/archivo inexistente, comando no reconocido, "Acceso denegado.") se muestran como **texto CMD real**, en el verde monocromático de siempre — no contradice la regla de "no mostrar ningún indicador de error" de [[Reglas]]: en una terminal el texto **es** la interfaz, no un adorno de error agregado encima; no hay rojo, ni bordes, ni shake.
@@ -95,6 +96,20 @@ Los tres se envuelven en `.kmdLeftWrap` (`text-align: left`) — el nombre qued�
 - Un `fetch()` fallido (red caída, el servidor no manda `Access-Control-Allow-Origin`, o rechaza un encabezado custom en el preflight de CORS) no se puede distinguir desde JS — todos tiran el mismo `TypeError`, así que el mensaje de error (`curl: (7) ...`) cubre las tres posibilidades a la vez.
 - El cuerpo se recorta a `CURL_LIMITE_CHARS` (4000) y `CURL_LIMITE_LINEAS` (200 líneas): sin este límite, una página grande generaría miles de `<div class="kmdLine">` (uno por línea, ver `_printLine`) y podría trabar la ventana.
 - **JSON reindentado** (agregado después): si el cuerpo parsea como JSON válido (`JSON.parse` en un `try/catch`), se reemplaza por `JSON.stringify(parsed, null, 2)` antes de imprimirlo — la mayoría de las APIs devuelven JSON minificado en una sola línea, imposible de leer en el scrollback. Si no es JSON (HTML, texto plano, etc.) se muestra crudo, sin tocar.
+
+## `run <juego>` (2026-08-14, nuevo)
+
+`run ahorcado|kdle|blackjack|flipcoin|tetris|carrera` juega uno de los seis puertos de Java **adentro de la terminal**, a pedido explícito del usuario ("no crear archivos nuevos, reutilizar los que están"). No abre una `Window` nueva: `RUN_GAMES` mapea el alias a un `ext` real de `iconsSrc` (ver [[Frontend Model Services Utils]] — `carrera` es el único que no coincide 1:1, mapea a `"carreraauto"`), `_cmdRun` usa `loadAppClass(ext)` (el mismo lazy-import que ya usa `DesktopManager`, ver [[DesktopManager]]) para traer la clase, instancia `new Clase(alias)` "pelada" (sin pasar por `abrirVentana()`/`Window` real — ver [[File]], confirmado seguro) y monta directo lo que devuelve `instancia._crearContenido()` en un `div.kmdRunContainer` que reemplaza a `.kmdOutput` mientras dura (mismo alto disponible, `flex:1;min-height:0`, ver `kmd.css`).
+
+**Ctrl+C sale en cualquier momento** (menú o partida en curso), sin que `Kmd` necesite saber en qué pantalla está el juego: un listener en **fase de captura** sobre `window` (`{capture:true}`) se dispara antes que cualquier listener propio del juego (todos van en fase de burbuja, el default de `File._registrarTeclado`) sin importar el estado — llama `instancia._detener?.()` (ver [[File]]) para cortar el bucle de juego si tiene uno y sacar todos sus listeners de teclado, saca el contenedor del DOM, y reengancha `.kmdOutput` + el prompt (que ya venía manejando `_submit()` normalmente, sin cambios ahí).
+
+**Opción "CERRAR" en el menú (2026-08-14, corrección):** además de Ctrl+C, el menú principal en modo consola de cada uno de los seis juegos (`_mostrarMenuConsola`) tiene un ítem `CERRAR` — mismo camino de salida: `instancia._salirTerminal` queda apuntando a la misma función `salir` que dispara Ctrl+C (asignada dentro del executor de la `Promise`, antes de que el usuario pueda interactuar con el menú), así ninguna de las dos formas de salir puede quedar desincronizada. El mensaje final ya no menciona "(Ctrl+C)" porque ahora hay dos formas de salir.
+
+**Dos correcciones el mismo día, sobre "los seis juegos perdieron toda acción por mouse":**
+1. Primero se corrigió sumando `click` a los mismos helpers de teclado (`File._menuTeclado`/`_escapeVuelve`, `BlackJack._activarSeleccionRepetible`, `Tetris._activarGrillaTeclas`) — mouse y teclado convivían en el modo desktop.
+2. A pedido explícito del usuario, horas después, esa convivencia se revirtió: **el modo desktop volvió a ser mouse-only, como era originalmente**, sin ningún menú navegable por teclado. Cada pantalla desktop (`_mostrarMenu`, `_pedirApuesta`, `_esperarBotones`, la tabla de config de Tetris, los "< VOLVER") volvió a un `<p>`/`<button>` con `addEventListener("click", ...)` directo, sin ESC/flechas/Enter — exactamente el código de antes de que existiera el modo consola. `Tetris._activarGrillaTeclas` se eliminó del todo (dead code, ya no tenía caller). El teclado 100% funcional (`_menuTeclado`/`_escapeVuelve`/`_activarSeleccionRepetible`) quedó exclusivo del modo consola, que es donde hacía falta desde el principio — ver [[File]].
+
+El gameplay que siempre fue teclado (letras de Hangman/Kdle, movimiento de Tetris, capturar una tecla nueva en la config) no se tocó en ninguna de las dos correcciones: eso nunca dependió de mouse, en ningún modo.
 
 ## Cambio en `DesktopManager` (2026-07-31)
 

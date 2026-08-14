@@ -1,0 +1,48 @@
+---
+tags:
+  - portfolio/kneos
+  - apps
+---
+
+# CarRace
+
+⬅️ Volver a [[Apps]]
+
+`public/KneOS/js/apps/CarRace.js` (clase `CarRace`, ex `CarreraAuto.js`/`CarreraAuto`, renombrado 2026-08-13 — ver [[Deuda Técnica#Nombres en español traducidos a inglés (2026-08-13)]]) — extiende [[File]]. Extensión `"carreraauto"` (identificador `ext` persistido en BD, no traducido), ícono propio `sources/appIcon/carrace.svg` (ex `carreraauto.svg`, auto de perfil, bloques), `src = null`. Sin `Window` propia: usa la `Window` completa por defecto de `File` (como BlackJack/Ahorcado/FlipCoin), sin tamaño fijo.
+
+> [!abstract] Qué hace
+> Port del CarreraAuto de consola en Java original (clases `Auto`/`Juego`/`App`, 2026-08-13). 4 autos (Rojo/Azul/Cian/Blanco) avanzan 0-2 posiciones al azar por tick hasta que alguno llega a la meta en 53 — empate en el mismo tick se resuelve a favor del primero en orden de la lista (Rojo→Azul→Cian→Blanco), igual que `nombreGanador()` del original recorre el `ArrayList`. El jugador apuesta a un auto y un monto libre antes de largar; si acierta, cobra `monto × cuota` del auto ganador. El menú del Java tenía 3 opciones (Correr/Ver porcentajes/Salir); acá quedan 2 — "Salir" no se portó, cerrar la ventana cumple esa función (mismo criterio que el resto de las apps de juego).
+
+## Diferencias respecto al Java original
+
+- **Persistencia: archivo de texto → tabla en BD**: `grabar()` (que escribía el nombre del ganador a `ganadores.txt`, ruta absoluta hardcodeada) y `calcularPorcentaje()`/`setCuota()` (que releían ese mismo archivo) pasaron a la tabla `car_race_results` (ex `carreraauto_resultados`, ver [[Módulo CarRace]]) — igual que `flipcoin_results`, crece con cada carrera corrida, global y sin `pc_id`.
+- **Menú numérico → botones**: elegir auto (`apuestas()`, primera mitad) y elegir monto (segunda mitad) pasaron a dos pantallas con botones/input reales — ya no hace falta el reintento en bucle de una entrada inválida (`a>0 && a<autos.size()+1`, `$>0`), un botón de auto siempre es legal y el de "Apostar" queda deshabilitado hasta que el monto sea > 0.
+- **Cuota capturada antes de correr**: la cuota usada para pagar la apuesta se pide al servidor (`GET /carRaceRoutes/estadisticas`) justo al confirmar el monto, ANTES de correr la carrera — mismo momento relativo que el original, donde `setCuota()` corría una sola vez en el constructor de `Juego()`, antes de cualquier carrera de esa sesión, así que nunca queda afectada por el resultado que esa misma carrera está por generar.
+- **Cuota con guardas defensivas**: `cuota = total de carreras / victorias de ese auto` (idéntico a `setCuota()`). El original, con historial vacío o un auto sin victorias, terminaba en `NaN`/`Infinity` (división por cero sin manejar). Acá: `total === 0` → cuota neutra `x1` (sin datos todavía); `victorias === 0` con `total > 0` → cuota tapeada en `total` (sustituto finito razonable en vez de `Infinity`).
+- **Sin plata persistente**: igual que el original (que tampoco llevaba un saldo entre carreras — `apostado`/`autoApostado` son campos de instancia que se pisan en cada vuelta del menú), la apuesta es un monto libre por carrera sin validar contra ningún balance acumulado.
+- **Pista redibujada al final**: pequeño ajuste de UX respecto al original — `carrera()` en Java no reimprimía la pista con las posiciones finales antes de anunciar el ganador (el `do-while` corta apenas `existeGandor()` es true, sin un último `pista()`), así que el último frame quedaba un tick atrás de la meta. Acá sí se renderiza el frame final (auto ya cruzando la meta) antes de mostrar el mensaje, sin tocar el algoritmo de la carrera en sí.
+- **Carriles con etiqueta, sin color ANSI**: el original distinguía cada auto por color de terminal (`[31m` rojo, etc. — `Auto.color`). KneOS es monocromático verde sin excepciones (ver [[Hangman]] sobre el mismo criterio con los temas ANSI), así que cada auto se identifica por una etiqueta de texto (`.caCarrilTitulo`) sobre su carril en vez de por color. Las etiquetas mismas también dejaron de ser los nombres de color del Java (Rojo/Azul/Cian/Blanco) y pasaron a "Auto 1"–"Auto 4" (2026-08-13) — el `id` interno (`rojo`/`azul`/`cian`/`blanco`) no cambió, sigue siendo la clave que persiste en `car_race_results` y la que arma `AUTOS` en el backend, solo se tradujo el `nombre` que se muestra.
+- **Pista ocupa el 100% del ancho de la ventana**: el original dibujaba cada auto con `pos` espacios de un `<pre>` de ancho de pista fijo (60 columnas de texto, `ANCHO_PISTA`). Desde 2026-08-13 la posición se traduce a un porcentaje (`pos/META`) y el auto (`.caAuto`, un `<pre>` chico con el glyph del auto) se posiciona con `left: X%` sobre `.caPista`/`.caPistaLinea` (línea punteada a `width: 100%`), así la pista se estira con la ventana en vez de quedar recortada u ocupando solo una franja angosta a un tamaño de fuente fijo.
+- **Menú principal**: mismo patrón que BlackJack/Ahorcado/FlipCoin — `this.body` con clases `"app" "game" "carRaceApp" "mainMenu"` (2026-08-13: clase CSS renombrada de `carreraautoApp`), logo ASCII "CARRERA" en `<pre>` (fuente de bloque 5×5 propia, `_getLogoLines()`, mismo esquema que FlipCoin — el original no tenía ningún banner, solo el menú numérico; contenido visible sin traducir). A diferencia de FlipCoin, la pantalla de carrera SÍ saca la clase `mainMenu` (mismo motivo que BlackJack: header + carriles + mensaje + controles en columna, no un layout centrado).
+
+## `apps/game.css` (estándar compartido)
+
+No define CSS propio para menú/logo/botones/input — todo eso sale de `.game`/`.mainMenu`/`.game-boton`/`.game-fila-botones`/`.game-input` en `apps/game.css`. `carrace.css` (ex `carreraauto.css`) solo tiene lo específico de sus pantallas: `.caHeader` (resumen de la apuesta activa), `.caPistaCont`/`.caCarril`/`.caCarrilTitulo`/`.caPista`/`.caPistaLinea`/`.caAuto` (los 4 carriles, cada uno con etiqueta + pista a 100% de ancho + auto posicionado por `%`), `.caMensaje`, `.caControles` y `.caTabla`/`.caFila` (la pantalla de porcentajes).
+
+## Modo consola (2026-08-14)
+
+A pedido explícito (jugar desde `run carrera` en [[Kmd]]): cada pantalla tiene su par `_mostrarXConsola()` para cuando corre dentro de la terminal (`this._modoTerminal`, ver [[File]]/[[Kmd]]) — texto plano en vez de la UI de `game.css`, navegable con `File._menuTeclado`/`_escapeVuelve` (Arriba/Abajo, Enter, ESC). El bucle de la carrera (`while (!carros.some(...))`) chequea `this._detenido` (seteado por `File._detener()`) para poder cortarse si `Kmd._cmdRun` sale con Ctrl+C (o el ítem "CERRAR" del menú de `_mostrarMenuConsola`, mismo camino de salida — ver [[Kmd]]) a mitad de carrera — sin eso, el `setTimeout` en loop seguiría corriendo en segundo plano contra un tablero ya desmontado.
+
+**Dos correcciones el mismo día:** la primera pasada de agregar el modo consola también le sacó el click a `_mostrarMenu`/`_mostrarElegirAuto`/`_crearVolver`/`_mostrarMonto` en el modo desktop (pasaron a `File._menuTeclado`/Enter-en-el-input, sin click) — se corrigió sumando `click` a esos mismos helpers (mouse y teclado conviviendo). A pedido explícito del usuario, horas después esa convivencia se revirtió: el modo desktop volvió a ser **mouse-only, como era originalmente**. `_mostrarMenu()`, `_mostrarElegirAuto()`, `_crearVolver()` (branch desktop) y el botón "Volver al menú" post-carrera volvieron a `addEventListener("click", ...)` directo, sin `File._menuTeclado`/`_escapeVuelve`; `_mostrarMonto()` (desktop) perdió el handler de `Enter` sobre el `<input type="number">`, "Apostar" solo dispara con click otra vez, exactamente como antes de que existiera el modo consola. Los `_mostrarXConsola()` no se tocaron, siguen usando `File._menuTeclado`/`_escapeVuelve` como siempre.
+
+**Mismos autos en consola y desktop (2026-08-14):** el arte ASCII del auto (`.-'--\`-._` / `'-O---O--'`, antes hardcodeado dos veces) pasó a la constante `AUTO_ASCII` compartida — `_crearCarril()` (gráfico, `.caAuto` posicionado con `left: %`) y `_iniciarCarreraConsola()` (texto, dos líneas por carril con `" ".repeat(pos)` de indentación + una línea de guiones como referencia de pista, equivalente en texto de `.caPistaLinea`) ahora dibujan el mismo auto. Antes el modo consola mostraba un simple carácter `C` en vez del auto real.
+
+**Bug: la línea de referencia se quedaba corta contra el auto ganador (2026-08-14, corrección posterior):** la línea de guiones se armaba con `"-".repeat(META)` (53), pero el auto se dibuja como `pos` espacios + el arte de `AUTO_ASCII` (9-10 columnas de ancho) — al ganar, `pos` llega a `META`, así que el auto terminaba dibujado entre las columnas 53 y ~63, bien pasado el final de una línea de 53 guiones no acomodaba. Mismo problema que el modo gráfico ya resolvía con `.caPista { padding-right: 4em }` (reserva espacio a la derecha para el ancho del auto), solo que acá nadie lo había portado. Fix: nueva constante `ANCHO_AUTO = Math.max(...AUTO_ASCII.map(l => l.length))` (10, la línea de las ruedas) y la línea de referencia pasa a `"-".repeat(META + ANCHO_AUTO)` — ahora el auto, aunque esté en la posición `pos = META`, siempre termina dentro (o justo al borde) de la línea dibujada.
+
+## Persistencia
+
+Tabla `car_race_results` (ex `carreraauto_resultados`, ver [[Módulo CarRace]]) — cada carrera corrida inserta una fila con el auto ganador (fire-and-forget, sin esperar la respuesta antes de mostrar el mensaje final, mismo patrón que `FlipCoin._jugar`); "VER PORCENTAJES" lee esa tabla vía el conteo agregado por auto.
+
+## Consumido por
+
+Servicio frontend `CarRaceServices` (ex `CarreraAutoServices`, renombrado 2026-08-13 — ver [[Frontend Model Services Utils#Services]]), usado por [[CarRace]].
