@@ -19,7 +19,7 @@ Datos y registros estáticos.
 | `fileTypes.js` (2026-07-31) | `FileType`, `getFileTypeLabel(fileType)` | Enum de categorías (`GAME`/`PRODUCTIVITY`/`UTILITY`/`OTHER`/`SYSTEM`/`AI` = 1/2/3/4/5/6) equivalente a los ids de la tabla `files_type` (ver [[Módulo Icon]]). Cada app en `apps/` importa `FileType` y pasa su propio valor en su `super(...)` (ver [[File]]) — no hay una función que derive la categoría sola de la extensión. `getFileTypeLabel` devuelve el mismo texto en español que `file_type_desc` en BD (Juego/Productividad/Utilidades/Otros/Sistema/IA), sin pedirlo al backend — lo consume [[Menús Contextuales#`FileProperties`\|FileProperties]] para mostrar la categoría en "Tipo de archivo" |
 | `KneAiChat.js` | `class KneAiChat` | Value object: `constructor(id, name, chatHistory, chatContent)` — `chatContent` es el `div` DOM de mensajes de ese chat, creado on-demand si no se pasa uno |
 | `KfruitFruit.js` | `class KfruitFruit` | Value object de una fruta: `constructor(name, level, size, points, final, color, src)`, sin métodos |
-| `filesUndeletable.js` | `filesUndeletable` | `Set` de extensiones que no se pueden borrar (2026-07-29, `recyclebin` sumada 2026-07-31, `contacts` sumada 2026-08-04) — las de `defaultFiles`, ninguna recreable desde "Nuevo". Consumido por [[Menús Contextuales]] |
+| `filesUndeletable.js` | `filesUndeletable` | `Set` de extensiones que no se pueden borrar (2026-07-29, `recyclebin` sumada 2026-07-31, `contacts` sumada 2026-08-04, `chat` sumada 2026-08-18) — las de `defaultFiles`, ninguna recreable desde "Nuevo". Consumido por [[Menús Contextuales]] |
 
 ## Services (`public/KneOS/js/services/`)
 
@@ -48,11 +48,15 @@ Clientes HTTP hacia el backend, uno por dominio, todos montados sobre un wrapper
 | `KdleServices` | `getPalabraAlAzar`, `existePalabra` | [[Módulo Kdle]] |
 | `CarRaceServices` (ex `CarreraAutoServices`) | `addResultado(auto)`, `getEstadisticas()` | [[Módulo CarRace]] |
 | `TetrisServices` | `getKeybinds`, `updateKeybinds`, `getScores`, `insertScore` | [[Módulo Tetris]] |
+| `ChatServices` (2026-08-18) | `getMe`, `setNickname`, `getMessages(roomId, before?)`, `sendMessage(roomId, body)`, `openDm(pcId)`, `markRead(roomId)` | [[Módulo Chat]] |
 
 > [!success] `Groq.js` ya no es la excepción (2026-07-27)
 > Antes `ask()`/`getTitle()` no tenían try/catch propio — un fallo de red se propagaba como excepción no controlada. Ahora siguen el mismo patrón que el resto: `try/catch` + chequeo de `response.ok`, devuelven `null` en error. El caller ([[KneAI]]) se ajustó para no romper con ese `null`: si `getTitle` falla no bloquea el envío del mensaje (salta el renombrado nomás), y si `ask` falla no muestra nada — ni mensaje de error ni burbuja "null", queda tal cual para reintentar. Ver [[Deuda Técnica]].
 
 `IconServices.trashIcon`/`restoreIcon`/`purgeIcon` devuelven `data.success` (mismo patrón unificado desde 2026-07-27, ver [[Deuda Técnica]] — antes era `data.succes`, y hasta 2026-07-31 el método se llamaba `deleteIcon`).
+
+> [!info] `chatSocket.js` (2026-08-18) no es un service HTTP
+> Vive en `services/` por ubicación (cliente de un dominio del backend) pero no sigue el patrón de la tabla de arriba: no usa `apiFetch`, no tiene sentinel de retorno — es el cliente `WebSocket` nativo de [[KneChat]]. `connect()` abre el socket (cookie de sesión same-origin, sin token propio), `on(type, handler)` suscribe por tipo de evento (`message`/`presence`/`open`/`close`), y reconecta solo con backoff exponencial (1s→30s tope) si la desconexión no la pidió `close()`. El envío/lectura de mensajes en sí sigue yendo por `ChatServices` (HTTP) — el socket solo empuja los eventos salientes, ver [[Módulo Chat#`realtime/chatHub.js` — WebSocket]].
 
 ## Utils (`public/KneOS/js/utils/`)
 

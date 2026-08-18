@@ -13,13 +13,18 @@ Node/Express 5 (ESM) + Prisma 5 sobre PostgreSQL. Capas clásicas: `server.js �
 ## `server.js` — entry point
 
 Configura Express:
+0. **(2026-08-18)** Crea el `http.Server` de forma explícita (`http.createServer(app)`) en vez de dejar que `app.listen()` lo cree implícito, y lo pasa a `attachChatHub(server)` (`realtime/chatHub.js`) para poder engancharle el evento `upgrade` del WebSocket de [[KneChat]] — el resto de la config de Express sigue igual, esto solo cambia cómo termina levantándose el server al final.
 1. `import 'dotenv/config'` (primer import, 2026-07-28 — antes era `import dotenv from 'dotenv'` + `dotenv.config()` a mitad de archivo. ESM resuelve todos los `import` antes de ejecutar el cuerpo del módulo, así que con el orden viejo cualquier módulo importado más arriba que leyera `process.env` a nivel de módulo —como el `JWT_SECRET` de `middlewares/auth.js`— lo veía `undefined`). Carga `.env` (`GROQ_API_KEY`, `JWT_SECRET`, `DATABASE_URL`, `PORT`).
 2. Middlewares globales: `express.json()`, `cookieParser()` (2026-07-29, para leer la cookie de sesión — ver [[Módulo Session]]), `express.static(public/)`.
-3. Monta 14 routers: `/groq`, `/session`, `/kneAI`, `/iconRoutes`, `/kfruitRoutes`, `/hangmanRoutes` (2026-08-12, ex `/ahorcadoRoutes`, renombrada 2026-08-13), `/flipcoinRoutes` (2026-08-12), `/kdleRoutes` (2026-08-12, ex `/wordleRoutes`), `/carRaceRoutes` (2026-08-13, ex `/carreraautoRoutes`, renombrada el mismo día), `/tetrisRoutes` (2026-08-13), `/txtRoutes`, `/folderGroupByRoutes`, `/folderStylesRoutes`, `/folderViewsRoutes`.
+3. Monta 15 routers: `/groq`, `/session`, `/kneAI`, `/iconRoutes`, `/kfruitRoutes`, `/hangmanRoutes` (2026-08-12, ex `/ahorcadoRoutes`, renombrada 2026-08-13), `/flipcoinRoutes` (2026-08-12), `/kdleRoutes` (2026-08-12, ex `/wordleRoutes`), `/carRaceRoutes` (2026-08-13, ex `/carreraautoRoutes`, renombrada el mismo día), `/tetrisRoutes` (2026-08-13), `/txtRoutes`, `/folderGroupByRoutes`, `/folderStylesRoutes`, `/folderViewsRoutes`, `/chatRoutes` (2026-08-18, ver [[Módulo Chat]]).
 4. `GET /` sirve `public/index.html`.
-5. `app.listen(PORT)`.
+5. `server.listen(PORT)` (ex `app.listen(PORT)`, ver paso 0).
 
 No hay middleware de manejo de errores central en Express; cada controller captura sus propios errores (ver [[Deuda Técnica]]).
+
+## `realtime/` — tiempo real (2026-08-18)
+
+Capa nueva, fuera de la cadena clásica `routes/ → controllers/ → models/`: no sirve HTTP, solo empuja eventos a sockets ya conectados. `chatHub.js` es el único archivo — WebSocket de [[KneChat]], detalle completo en [[Módulo Chat#`realtime/chatHub.js` — WebSocket]]. Autentica el handshake reusando `readSessionToken()` de `middlewares/auth.js` (mismo mecanismo que HTTP, sin sistema de auth propio para el socket); escribir/leer sigue siendo HTTP normal contra `/chatRoutes`, que dispara el broadcast recién después de persistir.
 
 ## `utils/validation.js` (2026-07-27)
 
@@ -28,7 +33,7 @@ Helper compartido de validación de entrada, usado por todos los controllers de 
 ## `middlewares/`
 
 - **`auth.js`** (2026-07-28, cookie `httpOnly` desde 2026-07-29): `signSessionToken(pcId)` firma un JWT (`{ pcId }`, `expiresIn: '365d'`) con `JWT_SECRET`. `setSessionCookie(req, res, token)` la pone en una cookie `kneos_token` (`httpOnly`, `sameSite: 'strict'`, `secure: req.secure`) — antes viajaba en el header `Authorization` y el cliente la guardaba en `localStorage`, legible por cualquier JS de la página; se cambió a cookie para que ni el token ni el `pcId` sean accesibles desde la consola del navegador. `readSessionToken(cookies)` lee `cookies.kneos_token`, verifica firma/vencimiento y devuelve el `pcId` o `null` (no toca la base). `requireAuth(req, res, next)` es el middleware que se monta en cada router protegido: si `readSessionToken` no devuelve nada, `401 { error: "No autorizado" }`; si devuelve, setea `req.pcId`. A nivel de módulo hay un guard `if (!JWT_SECRET) throw` — como todo router protegido importa este archivo, faltar el secreto aborta el arranque en vez de firmar tokens con `undefined`. Ver [[Módulo Session]] y [[Deuda Técnica]].
-- **`rateLimiters.js`**: `scoreLimiter` (`express-rate-limit`, 5 req/min por IP, `POST /kfruitRoutes/score` y, desde 2026-08-13, también `POST /tetrisRoutes/score` — mismo shape `{name, score}`, se reusa en vez de sumar un limiter por juego, 2026-07-27); `sessionLimiter` (20 req/hora por IP, `POST /session/nueva` — es la única escritura pública sin token, 2026-07-28); `groqLimiter` (10 req/min, `keyGenerator: req.pcId` en vez de IP porque la ruta ya requiere auth, `/groq/*`, 2026-07-28); `flipcoinLimiter` (30 req/min por IP, `POST /flipcoinRoutes/resultado`, 2026-08-12, más generoso que `scoreLimiter` porque tirar la moneda es la acción principal del juego); `carreraautoLimiter` (15 req/min por IP, `POST /carRaceRoutes/resultado`, 2026-08-13, más bajo que `flipcoinLimiter` porque una carrera completa con animación tarda mucho más que tirar una moneda — el nombre del export no se tradujo, ver [[Deuda Técnica#Nombres en español traducidos a inglés (2026-08-13)]]). Ver [[Módulo Kfruit]], [[Módulo Hangman]], [[Módulo FlipCoin]], [[Módulo Kdle]], [[Módulo CarRace]], [[Módulo Tetris]], [[Módulo Session]], [[Módulo Groq]]. `/hangmanRoutes` y `/kdleRoutes` no tienen rate limiter propio — son de solo lectura, sin ningún endpoint que escriba.
+- **`rateLimiters.js`**: `scoreLimiter` (`express-rate-limit`, 5 req/min por IP, `POST /kfruitRoutes/score` y, desde 2026-08-13, también `POST /tetrisRoutes/score` — mismo shape `{name, score}`, se reusa en vez de sumar un limiter por juego, 2026-07-27); `sessionLimiter` (20 req/hora por IP, `POST /session/nueva` — es la única escritura pública sin token, 2026-07-28); `groqLimiter` (10 req/min, `keyGenerator: req.pcId` en vez de IP porque la ruta ya requiere auth, `/groq/*`, 2026-07-28); `flipcoinLimiter` (30 req/min por IP, `POST /flipcoinRoutes/resultado`, 2026-08-12, más generoso que `scoreLimiter` porque tirar la moneda es la acción principal del juego); `carreraautoLimiter` (15 req/min por IP, `POST /carRaceRoutes/resultado`, 2026-08-13, más bajo que `flipcoinLimiter` porque una carrera completa con animación tarda mucho más que tirar una moneda — el nombre del export no se tradujo, ver [[Deuda Técnica#Nombres en español traducidos a inglés (2026-08-13)]]); `chatMessageLimiter` (20 req/min por `pc_id`, `POST /chatRoutes/room/:roomId/message`, 2026-08-18 — por sesión y no por IP, mismo criterio que `groqLimiter`, porque cada mensaje además dispara un broadcast a todo el mundo conectado); `nicknameLimiter` (5 req/min por `pc_id`, `POST /chatRoutes/nickname`, 2026-08-18 — techo bajo porque cambiar de alias es un evento raro, y de paso frena el sondeo de qué nicknames están tomados). Ver [[Módulo Kfruit]], [[Módulo Hangman]], [[Módulo FlipCoin]], [[Módulo Kdle]], [[Módulo CarRace]], [[Módulo Tetris]], [[Módulo Chat]], [[Módulo Session]], [[Módulo Groq]]. `/hangmanRoutes` y `/kdleRoutes` no tienen rate limiter propio — son de solo lectura, sin ningún endpoint que escriba.
 
 ## `db/prisma.js`
 
@@ -38,7 +43,7 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 
 | Tabla              | PK              | Campos clave                                                                 | Relaciones |
 |--------------------|-----------------|-------------------------------------------------------------------------------|------------|
-| `sessions`         | `pc_id`         | `creation_date`                                                                | 1–N con `kneai_chats`, `kneai_messages`; 1–1 con `kfruit_keybinds`, `tetris_keybinds` |
+| `sessions`         | `pc_id`         | `creation_date`, `nickname` (2026-08-18, único, nullable — alias de [[KneChat]], no una cuenta) | 1–N con `kneai_chats`, `kneai_messages`, `chat_room_members`, `chat_messages`; 1–1 con `kfruit_keybinds`, `tetris_keybinds` |
 | `files` (ex `icons`, 2026-07-29) | `id_icon`       | `name`, `ext`, `src`, `desktop_place`, `pc_id`, `parent_id`, `size`, `fav`, timestamps | self-relation vía `parent_id` (jerarquía carpetas); 1–1 con `txt` |
 | `txt`              | `id_icon`       | `txtcontent`                                                                   | 1–1 con `files` (comparte PK) |
 | `kfruit_keybinds`  | `id_keybinds`   | `pc_id`, `moveleft` (def. `ArrowLeft`), `moveright` (def. `ArrowRight`), `drop` (def. `ArrowDown;Space`) | N–1 con `sessions` |
@@ -53,6 +58,9 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 | `folder_styles`    | `folder_style_id` | `folder_id` (**`@unique`**, 2026-07-28), `folder_view` (Int, FK), `folder_group_by` (Int, FK), `folder_group_order` (**VarChar**, "asc"/"desc") | N–1 con `files` (vía `folder_id`); N–1 con `folder_group_by` (FK `folder_styles_folder_group_by_fk`); N–1 con `folder_views` (FK `folder_styles_folder_views_fk`) |
 | `folder_group_by`  | `folder_group_by_id` | `folder_group_by_desc`                                                 | 1–N con `folder_styles` |
 | `folder_views`     | `folder_view_id` | `folder_view_desc`                                                         | 1–N con `folder_styles` — catálogo de "Íconos grandes"/"Íconos pequeños"/"Lista" |
+| `chat_rooms` (2026-08-18) | `room_id` | `kind` (enum `global`\|`dm`), `created_at` | 1–N con `chat_room_members`, `chat_messages` — una única fila `global` (sembrada al arrancar el server), N filas `dm` |
+| `chat_room_members` (2026-08-18) | `room_id`+`pc_id` (compuesta) | `last_read_at`, `hidden_at` (2026-08-19, nullable — "eliminar chat" del lado del cliente, ver [[Módulo Chat#`hidden_at` — "eliminar chat" del lado del cliente (2026-08-19)]]) | N–1 con `chat_rooms` y `sessions` — solo para salas `dm` (dos filas c/u); la sala `global` no tiene filas acá, la ve todo el mundo |
+| `chat_messages` (2026-08-18) | `message_id` | `room_id`, `pc_id`, `body`, `deleted`/`edited` (2026-08-19, Boolean, ver [[Módulo Chat]]), `created_at` | N–1 con `chat_rooms` y `sessions`; índice `(room_id, created_at)` |
 
 > [!info] `folder_group_by`, `folder_views` y `folder_styles` ya tienen código (actualizado 2026-07-27)
 > Las tres tablas aparecieron en sucesivos `prisma db pull` sin código backend inicialmente. `folder_group_by` y `folder_views` son catálogos de solo lectura (ver [[Módulo Folder Group By]] y [[Módulo Folder Views]]) que alimentan los submenús "Ordenar por" y "Ver" de [[Folder]], respectivamente. `folder_styles` persiste el estilo completo por carpeta (vista + criterio + dirección de orden) — ver [[Módulo Folder Styles]].
@@ -88,6 +96,7 @@ Cada dominio tiene su propia nota con el detalle de rutas, controllers y modelos
 - [[Módulo Kdle]] — banco de palabras de 5 letras del minijuego
 - [[Módulo CarRace]] — log de carreras y cuotas del minijuego de apuestas a autos
 - [[Módulo Tetris]] — keybinds y leaderboard del minijuego de bloques
+- [[Módulo Chat]] — alias, salas y mensajes de KneChat, más el WebSocket que los transporta en vivo
 - [[Módulo Folder Group By]] — catálogo de criterios de "Ordenar por" de Folder
 - [[Módulo Folder Views]] — catálogo de estilos de "Ver" de Folder
 - [[Módulo Folder Styles]] — persistencia del estilo (vista/orden) por carpeta
@@ -98,7 +107,7 @@ Cada dominio tiene su propia nota con el detalle de rutas, controllers y modelos
 
 ## Dependencias (`package.json`)
 
-`@prisma/client`, `prisma`, `pg`, `express`, `uuid`, `jsonwebtoken` (agregada 2026-07-28, ver [[Módulo Session]]), `cookie-parser` (agregada 2026-07-29, ídem), `dotenv`, `express-rate-limit` (agregada 2026-07-27, ver [[Módulo Kfruit]]), `an-array-of-spanish-words` (agregada 2026-08-13, diccionario de ~636k palabras usado solo por Kdle para validar intentos, ver [[Módulo Kdle]]).
+`@prisma/client`, `prisma`, `pg`, `express`, `uuid`, `jsonwebtoken` (agregada 2026-07-28, ver [[Módulo Session]]), `cookie-parser` (agregada 2026-07-29, ídem), `dotenv`, `express-rate-limit` (agregada 2026-07-27, ver [[Módulo Kfruit]]), `an-array-of-spanish-words` (agregada 2026-08-13, diccionario de ~636k palabras usado solo por Kdle para validar intentos, ver [[Módulo Kdle]]), `ws` (agregada 2026-08-18, servidor WebSocket de [[Módulo Chat]]), `cookie` (agregada 2026-08-18, parsea la cookie de sesión en el handshake WS — nota: desde la v2 exporta `parseCookie`/`stringifyCookie`, no `parse`/`serialize`).
 
 > [!info] `connect-pg-simple` removida (2026-07-27)
 > Estaba declarada pero no se importaba en ningún archivo — vestigio de un enfoque de sesión anterior (store de sesiones Express sobre Postgres) reemplazado por el sistema propio de `pc_id`. Se confirmó que no había ninguna referencia y se hizo `npm uninstall`. Ver [[Deuda Técnica]].

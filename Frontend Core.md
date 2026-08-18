@@ -21,7 +21,7 @@ Script de entrada (`type="module"`, top-level `await`), cargado desde `public/Kn
    - `window.archivosAbiertos = new Map()` — registro de toda instancia de archivo/carpeta abierta, indexado por `id` de ícono.
    - `window.groq = new Groq()` — cliente único del asistente IA.
 3. `await startSession()` — bloquea el arranque hasta resolver la sesión ([[Módulo Session]]); carga `window.folderGroupByOptions`/`window.folderViewsOptions`.
-4. Instancia `DesktopManager`, `Clock`, `TaskbarContextMenu`; llama `desktop.iniciar()` y `reloj.iniciar()`.
+4. Instancia `DesktopManager`, `Clock`, `TaskbarContextMenu`; llama `desktop.iniciar()`, `reloj.iniciar()` y — *(2026-08-18)* — `iniciarScrollManual()` (ver [[#WheelScroll (2026-08-18)]]).
 5. *(2026-08-13)* Saca (fade-out + remove) el `#loadingScreen` del `index.html` — ver [[Escena 3D#Placeholder de carga con `<img>`, no texto (2026-08-13)]].
 
 ## Clases del core
@@ -44,6 +44,13 @@ Script de entrada (`type="module"`, top-level `await`), cargado desde `public/Kn
 | `dragGhost.js` | Ghost transparente + cableado de `dragstart` | [[Drag and Drop y Selección Múltiple]] |
 | `multiSelect.js` | Selección múltiple (ctrl+click) y borrado con `Delete` (ex `seleccionMultiple.js`, renombrado y traducido al inglés 2026-07-29) | [[Drag and Drop y Selección Múltiple]] |
 | `FileProperties` | Ventana "Propiedades" de un archivo (nombre editable, tipo, ubicación/tamaño, creado/modificado), sobre `ViewWindow` — ex `PropertiesApp`, reemplaza a `PropertiesDialog.js` (2026-07-29) | [[Menús Contextuales]] |
+| `iniciarScrollManual` (`core/WheelScroll.js`) | Polyfill de scroll manual por rueda del mouse (2026-08-18) | [[#WheelScroll (2026-08-18)]] |
+
+## WheelScroll (2026-08-18)
+
+`core/WheelScroll.js` exporta `iniciarScrollManual()`, llamado una sola vez desde `KNEOS.js` (paso 4 del bootstrap, arriba). Un único listener `wheel` a nivel `document` (`{ passive: false }`): sube por `parentElement` desde `e.target` hasta encontrar el primer ancestro con `overflow-y: auto|scroll` computado y `scrollHeight > clientHeight`, le suma `e.deltaY` a `scrollTop` a mano, y llama `e.preventDefault()`.
+
+Existe porque el scroll nativo por rueda del mouse **no dispara** dentro del iframe cuando KneOS corre embebido en la escena 3D del portfolio (`public/js/main.js`, iframe posicionado con `transform: matrix3d(...)` vía `CSS3DObject`) — ver diagnóstico completo en [[Escena 3D#Scroll nativo roto detrás del `matrix3d()` del CSS3DObject (2026-08-18)]]. En `KneOS/index.html` standalone el scroll nativo ya funcionaba solo; el handler ahí reemplaza esa acción nativa por la misma lógica a mano, sin duplicar el desplazamiento (gracias al `preventDefault`) — mismo comportamiento en los dos escenarios, una sola implementación.
 
 ## Estilos globales — `styles/base.css`
 
