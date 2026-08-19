@@ -16,7 +16,7 @@ Configura Express:
 0. **(2026-08-18)** Crea el `http.Server` de forma explícita (`http.createServer(app)`) en vez de dejar que `app.listen()` lo cree implícito, y lo pasa a `attachChatHub(server)` (`realtime/chatHub.js`) para poder engancharle el evento `upgrade` del WebSocket de [[KneChat]] — el resto de la config de Express sigue igual, esto solo cambia cómo termina levantándose el server al final.
 1. `import 'dotenv/config'` (primer import, 2026-07-28 — antes era `import dotenv from 'dotenv'` + `dotenv.config()` a mitad de archivo. ESM resuelve todos los `import` antes de ejecutar el cuerpo del módulo, así que con el orden viejo cualquier módulo importado más arriba que leyera `process.env` a nivel de módulo —como el `JWT_SECRET` de `middlewares/auth.js`— lo veía `undefined`). Carga `.env` (`GROQ_API_KEY`, `JWT_SECRET`, `DATABASE_URL`, `PORT`).
 2. Middlewares globales: `express.json()`, `cookieParser()` (2026-07-29, para leer la cookie de sesión — ver [[Módulo Session]]), `express.static(public/)`.
-3. Monta 15 routers: `/groq`, `/session`, `/kneAI`, `/iconRoutes`, `/kfruitRoutes`, `/hangmanRoutes` (2026-08-12, ex `/ahorcadoRoutes`, renombrada 2026-08-13), `/flipcoinRoutes` (2026-08-12), `/kdleRoutes` (2026-08-12, ex `/wordleRoutes`), `/carRaceRoutes` (2026-08-13, ex `/carreraautoRoutes`, renombrada el mismo día), `/tetrisRoutes` (2026-08-13), `/txtRoutes`, `/folderGroupByRoutes`, `/folderStylesRoutes`, `/folderViewsRoutes`, `/chatRoutes` (2026-08-18, ver [[Módulo Chat]]).
+3. Monta 17 routers: `/groq`, `/session`, `/kneAI`, `/iconRoutes`, `/kfruitRoutes`, `/hangmanRoutes` (2026-08-12, ex `/ahorcadoRoutes`, renombrada 2026-08-13), `/flipcoinRoutes` (2026-08-12), `/kdleRoutes` (2026-08-12, ex `/wordleRoutes`), `/carRaceRoutes` (2026-08-13, ex `/carreraautoRoutes`, renombrada el mismo día), `/tetrisRoutes` (2026-08-13), `/txtRoutes`, `/cameraPhotoRoutes` (2026-08-19, ver [[Módulo CameraPhoto]]), `/folderGroupByRoutes`, `/folderStylesRoutes`, `/folderViewsRoutes`, `/chatRoutes` (2026-08-18, ver [[Módulo Chat]]), `/themeRoutes` (2026-08-19, ver [[Módulo Theme]]).
 4. `GET /` sirve `public/index.html`.
 5. `server.listen(PORT)` (ex `app.listen(PORT)`, ver paso 0).
 
@@ -28,7 +28,7 @@ Capa nueva, fuera de la cadena clásica `routes/ → controllers/ → models/`: 
 
 ## `utils/validation.js` (2026-07-27)
 
-Helper compartido de validación de entrada, usado por todos los controllers de escritura/lectura scopeada (íconos, txt, kneAI, kfruit): `isNonEmptyString(value, maxLength?)`, `isString(value)` (permite vacío, para contenido de txt), `isValidId(value)` (entero positivo), `isBoolean(value)`. Devuelven `400` antes de llegar a Prisma en vez de dejar pasar datos mal formados. Es el equivalente backend de `public/KneOS/js/utils/formato.js` — helpers puros, sin dependencias.
+Helper compartido de validación de entrada, usado por todos los controllers de escritura/lectura scopeada (íconos, txt, kneAI, kfruit): `isNonEmptyString(value, maxLength?)`, `isString(value)` (permite vacío, para contenido de txt), `isValidId(value)` (entero positivo), `isBoolean(value)`, `isNonNegativeInteger(value)`, `isColorArray(value, length)` (2026-08-19: array de exactamente `length` strings hex `"#rrggbb"`, usado por [[Módulo CameraPhoto]] para validar el array de píxeles de una foto). Devuelven `400` antes de llegar a Prisma en vez de dejar pasar datos mal formados. Es el equivalente backend de `public/KneOS/js/utils/formato.js` — helpers puros, sin dependencias.
 
 ## `middlewares/`
 
@@ -43,9 +43,10 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 
 | Tabla              | PK              | Campos clave                                                                 | Relaciones |
 |--------------------|-----------------|-------------------------------------------------------------------------------|------------|
-| `sessions`         | `pc_id`         | `creation_date`, `nickname` (2026-08-18, único, nullable — alias de [[KneChat]], no una cuenta) | 1–N con `kneai_chats`, `kneai_messages`, `chat_room_members`, `chat_messages`; 1–1 con `kfruit_keybinds`, `tetris_keybinds` |
-| `files` (ex `icons`, 2026-07-29) | `id_icon`       | `name`, `ext`, `src`, `desktop_place`, `pc_id`, `parent_id`, `size`, `fav`, timestamps | self-relation vía `parent_id` (jerarquía carpetas); 1–1 con `txt` |
+| `sessions`         | `pc_id`         | `creation_date`, `nickname` (2026-08-18, único, nullable — alias de [[KneChat]], no una cuenta) | 1–N con `kneai_chats`, `kneai_messages`, `chat_room_members`, `chat_messages`; 1–1 con `kfruit_keybinds`, `tetris_keybinds`, `theme_settings` |
+| `files` (ex `icons`, 2026-07-29) | `id_icon`       | `name`, `ext`, `src`, `desktop_place`, `pc_id`, `parent_id`, `size`, `fav`, timestamps | self-relation vía `parent_id` (jerarquía carpetas); 1–1 con `txt`; 1–1 con `camera_photos` (2026-08-19) |
 | `txt`              | `id_icon`       | `txtcontent`                                                                   | 1–1 con `files` (comparte PK) |
+| `camera_photos` (2026-08-19) | `id_icon` | `pixels` (Json, array de 4096 bytes de gris 0-255 — antes colores hex, cambiado el mismo día, ver [[Módulo CameraPhoto]]) | 1–1 con `files` (comparte PK) — calco de `txt`, ver [[Módulo CameraPhoto]] |
 | `kfruit_keybinds`  | `id_keybinds`   | `pc_id`, `moveleft` (def. `ArrowLeft`), `moveright` (def. `ArrowRight`), `drop` (def. `ArrowDown;Space`) | N–1 con `sessions` |
 | `kfruit_score`     | `id_score`      | `name`, `score`                                                                | ninguna — leaderboard global anónimo |
 | `words` (2026-08-13, unificación de `ahorcado_palabras` + `kdle_palabras`, 2026-08-12 cada una; tabla `palabras` resultante renombrada a `words` más tarde el mismo día — solo el esquema, el contenido sigue en español) | `id_word` | `word`, `created_at` | ninguna — catálogo fijo compartido por Ahorcado y Kdle, sin `pc_id`, mismo criterio que `folder_group_by`/`folder_views` (no `kfruit_score`: no crece, es de solo lectura). Ahorcado usa cualquier largo; Kdle filtra a las de 5 letras al elegir al azar (`WHERE LENGTH(word) = 5` en SQL crudo, ver [[Módulo Kdle]]) — la vieja `kdle_palabras` tenía esa restricción como `VarChar(5)` en el schema, acá ya no aplica porque la tabla es compartida |
@@ -53,6 +54,7 @@ Singleton del cliente Prisma (`const prisma = new PrismaClient()`), reexportado 
 | `car_race_results` (2026-08-13, ex `carreraauto_resultados`) | `id_result` | `car` (VarChar, `rojo`/`azul`/`cian`/`blanco` — el valor no se tradujo, solo la columna), `created_at` | ninguna — log global sin `pc_id`, crece con cada carrera, mismo criterio que `flipcoin_results` |
 | `tetris_keybinds` (2026-08-13) | `id_keybinds` | `pc_id`, `moveleft` (def. `KeyA;ArrowLeft`), `moveright` (def. `KeyD;ArrowRight`), `rotate` (def. `KeyC;ArrowUp`), `drop` (def. `Space`) | N–1 con `sessions` — calco de `kfruit_keybinds` con una columna más |
 | `tetris_score` (2026-08-13) | `id_score` | `name`, `score` | ninguna — leaderboard global anónimo, calco de `kfruit_score` |
+| `theme_settings` (2026-08-19) | `id_setting` | `pc_id` (`@unique`), `color` (def. `"verde"` — clave fija, no hex, ver [[Módulo Theme]]) | N–1 con `sessions` — calco de `kfruit_keybinds`/`tetris_keybinds` (upsert por `pc_id`), pero con [[Config]] en vez de un minijuego |
 | `kneai_chats`      | `chat_id`       | `pc_id`, `chat_name`, `created_at`                                             | 1–N con `kneai_messages` |
 | `kneai_messages`   | `message_id`    | `chat_id`, `role` (enum `user`\|`system`), `message`, `pc_id?`                 | N–1 con `kneai_chats` |
 | `folder_styles`    | `folder_style_id` | `folder_id` (**`@unique`**, 2026-07-28), `folder_view` (Int, FK), `folder_group_by` (Int, FK), `folder_group_order` (**VarChar**, "asc"/"desc") | N–1 con `files` (vía `folder_id`); N–1 con `folder_group_by` (FK `folder_styles_folder_group_by_fk`); N–1 con `folder_views` (FK `folder_styles_folder_views_fk`) |
@@ -90,6 +92,7 @@ Cada dominio tiene su propia nota con el detalle de rutas, controllers y modelos
 - [[Módulo KneAI]] — chats y mensajes del asistente IA
 - [[Módulo Groq]] — proxy hacia la API de Groq (LLM)
 - [[Módulo Txt]] — contenido de archivos de texto
+- [[Módulo CameraPhoto]] — contenido de las fotos de Camera (array de bytes de gris por píxel, sin color)
 - [[Módulo Kfruit]] — keybinds y leaderboard del minijuego
 - [[Módulo Hangman]] — banco de palabras global del minijuego
 - [[Módulo FlipCoin]] — log de tiradas de cara/cruz
@@ -100,6 +103,7 @@ Cada dominio tiene su propia nota con el detalle de rutas, controllers y modelos
 - [[Módulo Folder Group By]] — catálogo de criterios de "Ordenar por" de Folder
 - [[Módulo Folder Views]] — catálogo de estilos de "Ver" de Folder
 - [[Módulo Folder Styles]] — persistencia del estilo (vista/orden) por carpeta
+- [[Módulo Theme]] — color del sistema elegido en Config, uno por sesión
 
 ## Variables de entorno
 

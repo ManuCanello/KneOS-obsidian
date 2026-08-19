@@ -174,9 +174,9 @@ Mismo patrón exacto que `_bindSearchButton` (import dinámico, singleton en `wi
 
 ## `ViewWindow` (`core/ViewWindow.js`, 2026-07-29, extiende `Window`)
 
-Ventana "solo de vista": tamaño fijo, un único botón de control (Cerrar — sin minimizar ni maximizar), y no se registra en la taskbar. Pensada para diálogos de inspección puntual que no necesitan comportarse como una app persistente del sistema (usada hoy por [[Menús Contextuales|FileProperties]], ex `PropertiesApp`).
+Ventana "solo de vista": tamaño fijo, un único botón de control (Cerrar — sin minimizar ni maximizar), y no se registra en la taskbar. Pensada para diálogos de inspección puntual que no necesitan comportarse como una app persistente del sistema (usada hoy por [[Menús Contextuales|FileProperties]], ex `PropertiesApp`, y por [[Camera]] desde 2026-08-19 — diálogo de "sacar una foto").
 
-**Constructor(id, titulo, icono, crearContenido, {width, height, clase}={})** — reenvía a `super(...)` con `{ clase, tamano: {width, height} }`.
+**Constructor(id, titulo, icono, crearContenido, {width, height, clase, onClose}={})** — reenvía a `super(...)` con `{ clase, tamano: {width, height}, onClose }`. El `onClose` se sumó recién con [[Camera]] (2026-08-19): hasta entonces `ViewWindow` no reenviaba nada de `opciones` más allá de `clase`/`tamano`, así que un `onClose` pasado por el caller se perdía en silencio — sin apagar los tracks de `MediaStream` de Camera al cerrar la ventana, el navegador seguiría marcando la webcam como "en uso". Cambio retrocompatible: ningún otro `ViewWindow` existente (`Calculator`, `FileProperties`, `TaskbarSearch`, `Home`) pasaba `onClose`, así que ninguno cambia de comportamiento.
 
 Overrides (los tres ganchos que `Window` expone justamente para esto):
 - `get _usaTaskbar()` → `false`.

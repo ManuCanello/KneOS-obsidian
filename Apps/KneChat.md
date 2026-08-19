@@ -52,6 +52,10 @@ Botón `.chatEmojiButton` (`^_^`) junto al `<textarea>` abre un [[Menús Context
 - **Inserción en la posición del cursor**: el click en el botón le roba el foco al `<textarea>` antes de que el menú termine de abrir, así que `_openEmojiPicker` captura `selectionStart`/`selectionEnd` en ese mismo momento (siguen siendo legibles después del blur) — clickear un emoticono lo inserta ahí (`_insertEmoji`), no al final del texto, y devuelve el foco con el cursor justo después de lo insertado.
 - **Scroll propio del menú**: con 18 ítems, este `ContextMenu` es más alto que cualquier otro del sistema — y `ContextMenu._reancharSiNoEntra` solo reancla por overflow de abajo/derecha, nunca de arriba. Anclado `"bottom"` contra un botón que vive cerca del piso de la ventana, el menú se salía por arriba de la pantalla. Fix acotado al propio menú (`#chatEmojiContextMenu { max-height: 60vh; overflow-y: auto; }` en `knechat.css`), sin tocar el componente `ContextMenu` compartido — el resto de los menús del sistema (pocos ítems) no lo necesita.
 
+## Botón "Enviar" (2026-08-19)
+
+`.chatSendButton` junto al `<textarea>` (después del botón de emoticones) — mismo alto que `.chatInput`/`.chatEmojiButton` para alinear el borde inferior, pero ancho por contenido (padding, no cuadrado) al llevar texto en vez de un ícono. Llama a `_sendCurrentInput(input)`, la misma función que ya disparaba Enter — no es un camino nuevo, es un segundo trigger para el mismo envío (pensado para mobile/touch, donde Enter en un `<textarea>` no siempre está a mano). Se deshabilita junto con el resto del input en `#NOVEDADES` (`_updateInputState`, ver abajo).
+
 ## Seguridad: XSS
 
 **Todo el contenido de otra sesión se renderiza con `textContent`, nunca `innerHTML`** (`_buildMessageBubble`) — a diferencia de [[KneAI]], que sí usa `innerHTML` porque ahí el HTML lo genera el modelo bajo un prompt controlado. Acá el texto lo escribe otra persona; meterlo con `innerHTML` sería XSS persistente guardado en la base. Verificado con Playwright: mandar `<img src=x onerror=alert(1)>` como mensaje se ve como texto plano literal del otro lado, nunca se ejecuta.
