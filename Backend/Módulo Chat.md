@@ -8,7 +8,7 @@ tags:
 
 ⬅️ Volver a [[Backend]]
 
-Backend de [[KneChat]]: alias, sala global + DMs, historial y envío de mensajes, más la capa de tiempo real (`realtime/chatHub.js`) que hace el broadcast. Agregado 2026-08-18 — primer módulo del proyecto con WebSocket.
+Backend de [[KneChat]]: alias, sala global + sala de novedades (solo lectura) + DMs, historial y envío de mensajes, más la capa de tiempo real (`realtime/chatHub.js`) que hace el broadcast. Agregado 2026-08-18 — primer módulo del proyecto con WebSocket. Sala de novedades sumada 2026-08-19.
 
 ## Endpoints (`routes/chatRoutes.js`, montado en `/chatRoutes`)
 
@@ -16,17 +16,19 @@ Todo pasa por `requireAuth` (`router.use`), igual que `kneaiRoutes.js`.
 
 | Método | Path | Controller | Notas |
 |---|---|---|---|
-| GET | `/me` | `getMe` | Bootstrap de la app: `{ pcId, nickname, globalRoomId, dmRooms, online }` |
+| GET | `/me` | `getMe` | Bootstrap de la app: `{ pcId, nickname, globalRoomId, newsRoomId, dmRooms, online }` |
 | POST | `/nickname` | `setNickname` | `nicknameLimiter`. 3-16 chars, `/^[a-zA-Z0-9_-]+$/`. 409 si ya está tomado |
 | GET | `/room/:roomId/messages` | `getRoomMessages` | Paginado hacia atrás por `message_id` (`?before=`), no por timestamp |
-| POST | `/room/:roomId/message` | `sendMessage` | `chatMessageLimiter` (20/min por `pc_id`). Exige alias propio y pertenencia a la sala |
+| POST | `/room/:roomId/message` | `sendMessage` | `chatMessageLimiter` (20/min por `pc_id`). Exige alias propio y pertenencia a la sala. `403` si la sala es `news` (2026-08-19) — de solo lectura desde el cliente, ver más abajo |
 | POST | `/dm` | `openDm` | `{ pcId }` del destinatario → `findOrCreateDmRoom`. Exige alias propio (mismo motivo que `sendMessage`) |
 | POST | `/room/:roomId/read` | `markRoomRead` | Marca `last_read_at`; no-op silencioso en la sala global (no tiene filas en `chat_room_members`) |
 | DELETE | `/room/:roomId` | `deleteChat` | "Eliminar chat" (2026-08-19) — solo DMs, `400` si es la sala global. Oculta del lado del que la pide, no borra nada, ver más abajo |
 | PATCH | `/message/:messageId` | `editMessage` | (2026-08-19) Solo el autor, `chatMessageLimiter`. `404` si el mensaje no es propio o ya está borrado |
 | DELETE | `/message/:messageId` | `deleteMessage` | (2026-08-19) Solo el autor, `chatMessageLimiter`. Soft delete, no un DELETE real |
 
-**Pertenencia a la sala** (`isRoomMember`, `models/chatModel.js`): la sala `global` la puede leer/escribir cualquier sesión autenticada; una sala `dm` exige que `req.pcId` esté en `chat_room_members`. `getRoomMessages`/`sendMessage` devuelven `403` si no. Verificado con Playwright/curl: una tercera sesión pegándole directo a la API sobre el `room_id` de un DM ajeno recibe `403` en lectura y escritura.
+**Pertenencia a la sala** (`isRoomMember`, `models/chatModel.js`): las salas `global` y `news` las puede *leer* cualquier sesión autenticada; una sala `dm` exige que `req.pcId` esté en `chat_room_members`. `getRoomMessages`/`sendMessage` devuelven `403` si no. Verificado con Playwright/curl: una tercera sesión pegándole directo a la API sobre el `room_id` de un DM ajeno recibe `403` en lectura y escritura.
+
+**`news` es de solo lectura para todos, sin excepción** — `isRoomMember` la deja leer igual que `global`, pero `sendMessage` corta antes con un chequeo aparte de `getRoomKind(room_id) === "news"` (no delegado a `isRoomMember`, que solo resuelve pertenencia, no permisos de escritura). No hay ningún endpoint para publicar ahí: los anuncios se insertan directo en `chat_messages` contra el `room_id` de la fila `chat_rooms.kind = 'news'`, no hay UI de admin (2026-08-19, ver [[Deuda Técnica]] si en algún momento se necesita un flujo real de publicación).
 
 ## Controllers (`controllers/chatController.js`)
 

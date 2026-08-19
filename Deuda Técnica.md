@@ -30,6 +30,9 @@ Hallazgos transversales de la exploración del código, útiles para priorizar m
 >
 > Ver también [[Deuda Técnica#Imports con casing distinto al archivo real — corregido (encontrado y resuelto 2026-08-13)]] — mismo día, bug relacionado pero distinto (casing, no idioma).
 
+> [!info] `#NOVEDADES` sin flujo de publicación (2026-08-19)
+> La sala de anuncios de solo lectura de [[KneChat]] (`chat_rooms.kind = 'news'`) no tiene ningún endpoint ni UI para publicar — el único camino hoy es insertar directo en `chat_messages` contra ese `room_id`, a mano, sin sistema de admin/roles en el proyecto (ver [[Módulo Chat#`news` es de solo lectura para todos, sin excepción]]). Aceptado así a propósito por ahora; si en algún momento hace falta publicar más seguido, lo natural sería un endpoint aparte protegido por algo más que `requireAuth` (que hoy solo identifica sesión anónima, no roles).
+
 ## Decisiones cerradas (no son bugs a resolver)
 
 > [!warning] Autenticación real — decisión revertida (2026-07-28)

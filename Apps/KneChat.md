@@ -11,7 +11,7 @@ tags:
 `public/KneOS/js/apps/KneChat.js` (clase `KneChat`) — extiende [[File]]. Extensión `"chat"`, ícono propio `sources/appIcon/knechat.svg` (burbuja de diálogo), `FileType.UTILITY`. Agregado 2026-08-18. No es un port de Java (a diferencia de BlackJack/Hangman/FlipCoin/Kdle/CarRace/Tetris) — es la primera pieza de tiempo real de todo el proyecto.
 
 > [!abstract] Qué hace
-> Chat en vivo entre las sesiones que estén con la app abierta en ese momento: una sala pública `#GENERAL` compartida por todo el mundo, más DMs 1-a-1 que se abren clickeando un nombre en la lista de conectados. Historial persistido en Postgres. No hay cuentas de usuario — al entrar se elige un alias (3-16 caracteres, único) que queda colgado de la sesión anónima existente (`sessions.nickname`) y se reutiliza en visitas siguientes. Ver [[Módulo Chat]] para el backend y el protocolo WebSocket.
+> Chat en vivo entre las sesiones que estén con la app abierta en ese momento: una sala pública `#GENERAL` compartida por todo el mundo, una sala `#NOVEDADES` de solo lectura para anuncios (2026-08-19), más DMs 1-a-1 que se abren clickeando un nombre en la lista de conectados. Historial persistido en Postgres. No hay cuentas de usuario — al entrar se elige un alias (3-16 caracteres, único) que queda colgado de la sesión anónima existente (`sessions.nickname`) y se reutiliza en visitas siguientes. Ver [[Módulo Chat]] para el backend y el protocolo WebSocket.
 
 ## Identidad: "online" = ventana abierta, no "KneOS abierto"
 
@@ -27,11 +27,15 @@ Antes de ver nada, `_buildGate()` pide un nombre (`#chatNicknameInput`, `.game-i
 
 ## Salas y pestañas
 
-`this._rooms` es un `Map<room_id, {kind, label, otherPcId, messages, unread}>`. La sala global se conoce desde el arranque (`getMe().globalRoomId`); los DMs existentes se traen en el mismo `getMe()` (`dmRooms`). Un DM nuevo puede aparecer de dos formas:
+`this._rooms` es un `Map<room_id, {kind, label, otherPcId, messages, unread}>`. La sala global y la de novedades se conocen desde el arranque (`getMe().globalRoomId`/`newsRoomId`, se registran como pestañas fijas en ese orden antes de recorrer `dmRooms`); los DMs existentes se traen en el mismo `getMe()` (`dmRooms`). Un DM nuevo puede aparecer de dos formas:
 - **Lo abre uno mismo**: click en un nombre de `#chatOnline` → `POST /chatRoutes/dm` (`findOrCreateDmRoom`) → `_switchRoom`.
 - **Lo abre la otra persona primero**: el mensaje que llega por el socket ya trae `nickname`/`pc_id` del remitente — alcanza para construir la pestaña ahí mismo (`_onSocketMessage`, rama "sala que no conocíamos") sin pedir nada más al servidor. No hace falta un endpoint de "traer info de una sala".
 
-Un punto verde (`.chatTabUnread`) marca una pestaña con mensajes sin leer; se limpia al cambiar a esa pestaña (`_switchRoom` llama `markRead`, que solo importa para DMs — en la sala global es un no-op silencioso, no tiene filas en `chat_room_members`).
+Un punto verde (`.chatTabUnread`) marca una pestaña con mensajes sin leer; se limpia al cambiar a esa pestaña (`_switchRoom` llama `markRead`, que solo importa para DMs — en la sala global y en novedades es un no-op silencioso, ninguna de las dos tiene filas en `chat_room_members`).
+
+## `#NOVEDADES`: sala de solo lectura (2026-08-19)
+
+Mismo tratamiento que `#GENERAL` como pestaña fija (ni se puede "eliminar" ni lleva menú contextual), pero de solo lectura desde el cliente: nadie escribe ahí vía la app, el contenido se carga directo en la base (ver [[Módulo Chat#`ensureNewsRoom()`]]). `_updateInputState()` deshabilita el `<textarea>` y el botón de emojis al entrar a esa sala (`placeholder` cambia a "Solo lectura", estilo atenuado vía `:disabled` en `knechat.css`) en vez de ocultar el input — la idea es que quede claro *por qué* no se puede escribir, no que la caja desaparezca sin explicación. `_sendCurrentInput` y el menú contextual de mensajes (editar/eliminar) tienen el mismo guard por las dudas, aunque en la práctica nunca hay un mensaje propio ahí para editar.
 
 ## Editar, eliminar mensajes y eliminar chat (2026-08-19)
 
@@ -62,7 +66,7 @@ Monocromo verde estricto, como el resto del core/apps de KneOS — ningún color
 
 ## Persistencia
 
-`chat_rooms`/`chat_room_members`/`chat_messages` + columna `nickname` en `sessions` — ver [[Módulo Chat]].
+`chat_rooms`/`chat_room_members`/`chat_messages` + columna `nickname` en `sessions`. `chat_rooms.kind` es un enum con tres valores: `global`, `dm` y `news` (2026-08-19) — ver [[Módulo Chat]].
 
 ## Consumido por
 
