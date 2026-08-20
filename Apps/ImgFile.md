@@ -22,11 +22,10 @@ tags:
 >
 > **`onClose` sumado más tarde (2026-08-19, mismo día):** al principio no hacía falta — a diferencia de Camera, no había ningún recurso (stream de cámara) que cerrar. Pasó a necesitarlo con el repintado en caliente de más abajo: `onClose: () => window.removeEventListener(THEME_COLOR_EVENT, this._alCambiarTema)`, para no dejar el listener de cambio de tema colgado en `window` después de cerrar la ventana.
 
-## Carga (`_cargarFoto`) — mismo patrón que TxtFile
+## Carga (`_cargarFoto`) — siempre repide fresco, ya no cachea entre reaperturas
 
 ```js
 async _cargarFoto() {
-    this._cargado = true;
     if (this.id == null) return;
     const pixels = await this._cameraPhotoServices.getPhoto(this.id);
     if (pixels?.length !== PHOTO_SIZE * PHOTO_SIZE) return; // sin datos: canvas en blanco, sin mensaje de error
@@ -36,11 +35,16 @@ async _cargarFoto() {
 ```
 
 > [!bug] Reabrir la ventana dejaba el canvas en blanco (2026-08-19)
-> `Window.cerrar()` tira `_ventanaEl` entero del DOM y lo pone en `null` — el próximo `abrir()` corre `_crearContenido()` desde cero, con un `<canvas>` nuevo. `_crearContenido()` solo llamaba a `_cargarFoto()` si `!this._cargado`, y `_cargarFoto()` marca `_cargado = true` en su primera línea — así que cerrar y reabrir la ventana dejaba ese canvas nuevo sin nadie que lo dibuje: `_cargado` seguía en `true` de la primera apertura, así que la carga se saltaba, y como los píxeles nunca se guardaban en ningún lado (solo vivían como variable local `pixels` dentro de `_cargarFoto`), tampoco había nada en memoria para redibujar directo. Contrasta con [[TxtFile]], que sí cachea el contenido cargado en `this._texto` y lo vuelca directo en `_crearContenido()` (`editor.innerHTML = this._texto`) sin depender de que `_cargarContenido()` vuelva a correr.
+> `Window.cerrar()` tira `_ventanaEl` entero del DOM y lo pone en `null` — el próximo `abrir()` corre `_crearContenido()` desde cero, con un `<canvas>` nuevo. `_crearContenido()` solo llamaba a `_cargarFoto()` si `!this._cargado`, y `_cargarFoto()` marcaba `_cargado = true` en su primera línea — así que cerrar y reabrir la ventana dejaba ese canvas nuevo sin nadie que lo dibuje: `_cargado` seguía en `true` de la primera apertura, así que la carga se saltaba, y como los píxeles nunca se guardaban en ningún lado (solo vivían como variable local `pixels` dentro de `_cargarFoto`), tampoco había nada en memoria para redibujar directo.
 >
-> **Fix:** se agregó `this._pixels = null` en el constructor, y `_cargarFoto()` ahora hace `this._pixels = pixels` antes de dibujar (mismo rol que `_texto` en TxtFile). `_crearContenido()` pasa a: si `this._pixels` ya está en memoria, dibuja directo (`_dibujar(this._pixels)`) sin pedir nada al servidor; si no, y todavía no se cargó ni una vez (`!this._cargado`), recién ahí llama a `_cargarFoto()`. Verificado con Playwright: mismo conteo de píxeles no-negros en el canvas antes y después de cerrar/reabrir la ventana de una foto guardada.
+> **Fix original (2026-08-19):** se agregó `this._pixels = null` en el constructor, `_cargarFoto()` pasó a hacer `this._pixels = pixels` antes de dibujar, y `_crearContenido()` pasó a: si `this._pixels` ya está en memoria, dibuja directo sin pedir nada al servidor; si no, y todavía no se cargó ni una vez (`!this._cargado`), recién ahí llama a `_cargarFoto()`. Válido en su momento porque `ImgFile` era puramente de lectura — nada más escribía en `camera_photos`.
 
-`_crearContenido()` es síncrono (devuelve el `<canvas>` al toque) y dispara `_cargarFoto()` fire-and-forget al final, igual que `TxtFile._crearContenido`/`_cargarContenido` — el flag `_cargado` evita repedir el contenido si la ventana se cierra y se reabre dentro de la misma sesión. Si `pixels` no tiene exactamente 4096 elementos (foto cuyo guardado falló a mitad de camino, o `id` inválido), el canvas queda en negro sólido en vez de mostrar cualquier indicador de error — mismo criterio "no error message, just stay" que el resto de KneOS. Al final también se suscribe al evento de cambio de tema: `window.addEventListener(THEME_COLOR_EVENT, this._alCambiarTema)` — ver más abajo.
+> [!bug] Ese cache quedó stale en cuanto [[KPaint]] pudo editar `img` existentes (encontrado 2026-08-20)
+> El supuesto del fix de arriba ("nada más escribe en `camera_photos`") se rompió el mismo día que se agregó ABRIR/GUARDAR de `img` en KPaint (ver [[KPaint#Abrir / Nuevo KP / Exportar (`_origen`, 2026-08-20)|KPaint]]): abrir una foto con `ImgFile`, editarla desde otra ventana de KPaint (ABRIR → dibujar → GUARDAR) y volver a abrir la MISMA foto con `ImgFile` (mismo ícono, mismo `File` persistido en `window.archivosAbiertos`) seguía mostrando los píxeles viejos cacheados en `this._pixels` de la apertura anterior — la edición externa nunca se notaba porque `_crearContenido()` directamente no volvía a pedir nada.
+>
+> **Fix:** se sacó el flag `_cargado` por completo. `_crearContenido()` ahora dibuja los píxeles en memoria de una (si los hay, para no dejar el canvas en blanco mientras se espera la respuesta) **y siempre** dispara `_cargarFoto()` de nuevo — la respuesta fresca pisa lo que se haya dibujado con el cache viejo apenas llega. El costo (un fetch de más en el caso común, donde nadie tocó la foto) es despreciable frente a mostrar una versión vieja de un archivo que ahora sí puede cambiar por fuera. Verificado con Playwright: dibujo hecho con KPaint (vía EXPORTAR) → reabierto en KPaint con ABRIR → editado y GUARDADO → el ícono `img` reabierto (misma sesión, sin recargar la página) muestra ambos trazos, no solo el primero.
+
+`_crearContenido()` es síncrono (devuelve el `<canvas>` al toque) y dispara `_cargarFoto()` fire-and-forget al final, igual que `TxtFile._crearContenido`/`_cargarContenido`. Si `pixels` no tiene exactamente 4096 elementos (foto cuyo guardado falló a mitad de camino, o `id` inválido), el canvas queda en negro sólido en vez de mostrar cualquier indicador de error — mismo criterio "no error message, just stay" que el resto de KneOS. Al final también se suscribe al evento de cambio de tema: `window.addEventListener(THEME_COLOR_EVENT, this._alCambiarTema)` — ver más abajo.
 
 ## Dibujado (`_dibujar`) y repintado en caliente (`_alCambiarTema`)
 

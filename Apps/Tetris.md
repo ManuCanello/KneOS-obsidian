@@ -57,6 +57,18 @@ El gameplay en sí ya era 100% teclado desde el port original; lo que quedaba co
 
 **Dos correcciones el mismo día:** la primera pasada le sacó el click a `_mostrarMenu()`/`_crearVolver()`/`_activarGrillaTeclas()` también en el modo desktop — se corrigió sumando click a los tres (mouse y teclado conviviendo). A pedido explícito del usuario, horas después esa convivencia se revirtió: el modo desktop volvió a ser **mouse-only, como era originalmente**. `_mostrarMenu()` y `_crearVolver()` volvieron a `click` directo; la tabla de `_mostrarConfiguracion()` (desktop) volvió a `btn.addEventListener("click", () => this._capturarTecla(prop, i, btn))` por celda, sin navegación 2D — **`_activarGrillaTeclas` se eliminó del todo** (quedó sin caller: el modo consola, `_mostrarConfiguracionConsola`, usa el `_menuTeclado` genérico de [[File]], no una grilla 2D — una lista de texto no tiene columnas). `_capturarTecla` en sí (esperar la tecla nueva por teclado, una vez iniciada la captura) nunca se tocó: eso siempre fue teclado, en los dos modos, no es "menú".
 
+## Pausa (agregado 2026-08-20)
+
+El Java original no tenía forma de pausar. `this.pauseKey = "Escape"` (constructor) es fijo, no pasa por `_cargarKeybinds`/`_capturarTecla` como el resto de los controles — pausar es un control de la ventana, no una jugada configurable. `_togglePausa()` alterna `this._pausado`, gateado por `this._enJuego` (no hace nada si no hay partida corriendo):
+
+- El bucle de caída (`while` en `_iniciarJuego`) suma `this._pausado` al mismo chequeo que ya usaba `this._bloqueado` (ver "Bloqueo de input durante la animación de línea" arriba) — pausado, el `tick` de gravedad se saltea entero, tablero y pieza activa quedan tal cual estaban.
+- `onKeyDown` chequea `e.code === this.pauseKey` ANTES que el resto de las acciones (que además ahora también respetan `this._pausado`, no solo `this._bloqueado`) — así Escape alterna pausa incluso si el resto del input está bloqueado.
+- Un botón "PAUSA"/"REANUDAR" (`.tPausaBtn`, esquina superior derecha de `.tPantallaWrap`) hace lo mismo por click — mismo criterio que el resto de KneOS, mouse y teclado en paralelo, ninguno reemplaza al otro.
+- Overlay `.tPausaOverlay` (reusa `.game-over-overlay` de `Kfruit.css`, con un `h2` "PAUSA" en vez del contenido de fin de partida) se muestra/oculta con el atributo `hidden`.
+
+> [!bug] `hidden` solo no alcanzaba para ocultar el overlay
+> `.game-over-overlay` fija `display: flex` con la misma especificidad (una clase) que la regla `[hidden] { display: none }` de la hoja de estilos del navegador — y CSS de autor le gana a la hoja del navegador en un empate de especificidad, sin importar el orden. Resultado: poner `hidden = true` en el overlay de pausa no lo ocultaba, seguía mostrado encima del tablero. Se agregó `.tPausaOverlay[hidden] { display: none; }` en `tetris.css` (especificidad `[hidden]` + clase, más específica que solo la clase) para que sí gane. El botón de pausa (`.tPausaBtn`) tiene `z-index` más alto que el overlay para seguir siendo clickeable ("REANUDAR") mientras está pausado.
+
 ## Consumido por
 
 Servicio frontend `TetrisServices` (ver [[Frontend Model Services Utils#Services]]), usado por [[Tetris]].
