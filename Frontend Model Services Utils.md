@@ -51,6 +51,7 @@ Clientes HTTP hacia el backend, uno por dominio, todos montados sobre un wrapper
 | `TetrisServices` | `getKeybinds`, `updateKeybinds`, `getScores`, `insertScore` | [[Módulo Tetris]] |
 | `ChatServices` (2026-08-18) | `getMe`, `setNickname`, `getMessages(roomId, before?)`, `sendMessage(roomId, body)`, `openDm(pcId)`, `markRead(roomId)` | [[Módulo Chat]] |
 | `ThemeServices` (2026-08-19) | `getColor()`, `setColor(color)` | [[Módulo Theme]] |
+| `MapGeocodeServices` (2026-08-21) | `buscarLugar(query)` | [[Módulo Map]] |
 
 > [!success] `Groq.js` ya no es la excepción (2026-07-27)
 > Antes `ask()`/`getTitle()` no tenían try/catch propio — un fallo de red se propagaba como excepción no controlada. Ahora siguen el mismo patrón que el resto: `try/catch` + chequeo de `response.ok`, devuelven `null` en error. El caller ([[KneAI]]) se ajustó para no romper con ese `null`: si `getTitle` falla no bloquea el envío del mensaje (salta el renombrado nomás), y si `ask` falla no muestra nada — ni mensaje de error ni burbuja "null", queda tal cual para reintentar. Ver [[Deuda Técnica]].
@@ -59,6 +60,9 @@ Clientes HTTP hacia el backend, uno por dominio, todos montados sobre un wrapper
 
 > [!info] `chatSocket.js` (2026-08-18) no es un service HTTP
 > Vive en `services/` por ubicación (cliente de un dominio del backend) pero no sigue el patrón de la tabla de arriba: no usa `apiFetch`, no tiene sentinel de retorno — es el cliente `WebSocket` nativo de [[KneChat]]. `connect()` abre el socket (cookie de sesión same-origin, sin token propio), `on(type, handler)` suscribe por tipo de evento (`message`/`presence`/`open`/`close`), y reconecta solo con backoff exponencial (1s→30s tope) si la desconexión no la pidió `close()`. El envío/lectura de mensajes en sí sigue yendo por `ChatServices` (HTTP) — el socket solo empuja los eventos salientes, ver [[Módulo Chat#`realtime/chatHub.js` — WebSocket]].
+
+> [!info] `MapTileServices.js` (2026-08-21) tampoco habla con el backend propio
+> Segunda excepción a la tabla de arriba, distinta a `chatSocket.js`: usa `fetch` normal (no WebSocket) pero **no** pasa por `apiFetch` ni por ningún endpoint de este proyecto — pide vector tiles directo a `tiles.openfreemap.org` desde el navegador (CORS abierto, sin API key). No hay `Módulo` de backend correspondiente porque no hay backend involucrado: es la fuente de datos de [[KneMap]], caché LRU en memoria (16 tiles) nomás, sin persistencia. Ver la nota de [[KneMap]] sobre por qué sin proxy es a propósito, no un descuido.
 
 ## Utils (`public/KneOS/js/utils/`)
 
