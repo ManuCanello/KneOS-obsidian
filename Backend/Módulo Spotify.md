@@ -20,7 +20,7 @@ Vínculo de cuenta con Spotify y proxy autenticado hacia su Web API, para [[Knef
 - Solo pueden loguearse los usuarios agregados a mano en el dashboard de developer.spotify.com: **5** para apps nuevas, **25** si la app es anterior al 11-feb-2026 (grandfathered) — *Extended Quota* pide empresa registrada con 250k MAU, inviable acá.
 - Los `preview_url` de 30s están muertos para apps nuevas — sin fallback de audio para quien no tenga cuenta vinculada.
 - `GET /search` sigue vivo pero con `limit` máximo **10** (antes 50).
-- `GET /playlists/{id}/tracks` fue **removido**, reemplazado por `GET /playlists/{id}/items` (el que usa [[Knefy]]).
+- `GET /playlists/{id}/tracks` fue **removido**, reemplazado por `GET /playlists/{id}/items` (el que usa [[Knefy]]) — y el shape también cambió: cada elemento trae `item` (track *o* episode), no `track` (deprecated, sin fecha de remoción pero ya sin poblar — ver [[Knefy#Biblioteca, playlists y búsqueda]]).
 - Muertos para apps nuevas: `GET /tracks`/`/albums`/`/artists` (batch), `/browse/*`, `/artists/{id}/top-tracks`, `/users/{id}`, `/markets`.
 - Vivos y usados acá: todo `/me/player/*`, `GET /me/playlists`, `GET /me/tracks`, `GET /me/albums`, `GET /playlists/{id}/items`, `GET /albums/{id}`, `GET /artists/{id}`, `GET /tracks/{id}`, `GET /search`.
 
