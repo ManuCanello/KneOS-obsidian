@@ -54,7 +54,7 @@ Clientes HTTP hacia el backend, uno por dominio, todos montados sobre un wrapper
 | `ChatServices` (2026-08-18) | `getMe`, `setNickname`, `getMessages(roomId, before?)`, `sendMessage(roomId, body)`, `openDm(pcId)`, `markRead(roomId)` | [[Módulo Chat]] |
 | `ThemeServices` (2026-08-19) | `getColor()`, `setColor(color)` | [[Módulo Theme]] |
 | `MapGeocodeServices` (2026-08-21) | `buscarLugar(query)` | [[Módulo Map]] |
-| `KnefyServices` (2026-08-24) | `getAccessToken()`, `disconnect()`, `getMe()`, `playContext(deviceId, body)`, `addToQueue(uri, deviceId)`, `getQueue()`, `search(...)`, `getMyPlaylists()`, `getAllMyPlaylists()`, `getMySavedTracks()`, `getMySavedAlbums()`, `getPlaylistItems(playlistId)`, `getAlbum(albumId)` | [[Módulo Spotify]] |
+| `KnefyServices` (2026-08-24) | `getAccessToken()`, `disconnect()`, `getMe()`, `playContext(deviceId, body)`, `addToQueue(uri, deviceId)`, `getQueue()`, `search(...)`, `getMyPlaylists()`, `getAllMyPlaylists()`, `getMySavedTracks()`, `getMySavedAlbums()`, `getPlaylistItems(playlistId)`, `getAlbum(albumId)`, `getAlbumTracks(albumId)`, `getArtistAlbums(artistId)` (2026-08-25, navegación desde la pantalla completa) | [[Módulo Spotify]] |
 
 > [!success] `Groq.js` ya no es la excepción (2026-07-27)
 > Antes `ask()`/`getTitle()` no tenían try/catch propio — un fallo de red se propagaba como excepción no controlada. Ahora siguen el mismo patrón que el resto: `try/catch` + chequeo de `response.ok`, devuelven `null` en error. El caller ([[KneAI]]) se ajustó para no romper con ese `null`: si `getTitle` falla no bloquea el envío del mensaje (salta el renombrado nomás), y si `ask` falla no muestra nada — ni mensaje de error ni burbuja "null", queda tal cual para reintentar. Ver [[Deuda Técnica]].
