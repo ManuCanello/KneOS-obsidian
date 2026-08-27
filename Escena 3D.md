@@ -63,6 +63,17 @@ Se crea un `<iframe title="Escritorio KneOS">` (2026-08-13: `title` agregado —
 > [!warning] `lampara.glb` sin integrar
 > El asset existe en `public/models/lampara.glb` pero **no se carga** en ningún lugar del código leído. Ver [[Deuda Técnica]].
 
+### Escritorio (`desk.glb`) y cajones interactivos (2026-08-27)
+
+`GLTFLoader` carga `./models/desk.glb` dentro del bloque diferido (junto con `OrbitControls`/luces secundarias, no en el bootstrap crítico). El modelo trae horneada una escala/traslación ajena a esta escena (`scale ×3.9445`, `translation.y -3.475` en sus 4 nodos — parece exportado desde otro archivo con otras unidades); se deshace con `desk.scale.setScalar(1/3.9445433616638184)` en vez de tocar el asset.
+
+> [!warning] La `pc.glb` ya es un mueble completo — el escritorio va al lado, no debajo
+> Intento inicial: ubicar el escritorio *debajo* de la PC, con su superficie a la misma altura que la base de la PC (`y≈0.008`, coincide con la base de las patas de la `pc.glb`). Visualmente no sirvió: `pc.glb` no es un monitor+teclado separados sobre una mesa, es un mueble monolítico (terminal/consola tipo kiosco) con sus propias patas finas hasta el piso — su cuerpo (bbox `y` hasta `2.33`, `z` hasta `1.89`) tapa por completo la zona bajo sí mismo desde casi cualquier ángulo de cámara normal. Confirmado con Playwright: ocultando la PC el escritorio se veía perfecto (buen modelo, buena escala); con la PC visible, desaparecía. Se reposicionó como mueble separado al lado (`desk.position.set(2.45, 0.883, 0.45)`, parado sobre el mismo nivel de piso que la PC) — visible desde el ángulo por defecto con un poco de orbit/zoom-out, y con los cajones (lo interactivo) efectivamente alcanzables por el usuario.
+
+Nodos del modelo: `Desk` (tablero+estructura) y tres cajones — `Cajon_1` (derecha, alto), `Cajon_2`/`Cajon_3` (izquierda, apilados) — cada uno un `Mesh` independiente cuyo eje local `+Z` apunta hacia el frente del escritorio (mismo eje que en `pc.glb`/cámara).
+
+**Click para abrir/cerrar**: `cssDiv` (el mismo elemento donde escucha `OrbitControls`) suma listeners de `pointerdown`/`pointerup`. Se distingue un click real de un drag de cámara por el desplazamiento en píxeles entre ambos eventos (`>6px` = drag, se ignora). En un click válido: `raycaster.intersectObjects(scene.children, true)`, si el primer hit es una `Mesh` presente en `drawerState` (un `Map<Mesh, {closedZ, openZ, open}>`, poblado al cargar `desk.glb`), se togglea `state.open`. `updateDrawers()` corre en cada frame de `animate()` (antes del gate de `needsRender`) interpolando `position.z` hacia el target (`lerp` con factor `0.18`, distancia de apertura `0.35`) y prendiendo `needsRender` mientras haya movimiento pendiente — mismo patrón de render-bajo-demanda que el resto de la escena, no un loop aparte.
+
 ### Loop de render (`animate()`)
 
 `requestAnimationFrame` recursivo: `controls?.update()` → `rendererCSS?.render(scene, camera)` → `renderer.clear()` → `renderer.render(scene, camera)` (2026-08-13: optional chaining porque `controls`/`rendererCSS` no existen hasta que corre el bloque diferido, ver arriba). El `renderer.clear()` manual asegura que el canvas WebGL transparente se limpie a `alpha 0` antes de dibujar de nuevo (con `autoClear=false` en la config, evita un clear automático redundante).
