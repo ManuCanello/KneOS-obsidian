@@ -32,11 +32,17 @@ Proxy hacia la [API de Groq](https://groq.com/) (modelo `openai/gpt-oss-120b`), 
 ## `POST /groq/chat`
 
 - Recibe `{context, message, chatHistory}` (`context` = system prompt, `chatHistory` = array `{role, content}` previos).
-- Arma `[system(context), ...chatHistory, user(message)]`, llama a `https://api.groq.com/openai/v1/chat/completions` con `model: openai/gpt-oss-120b`, `temperature: 0.7`, `max_tokens: 1024`, `Authorization: Bearer <GROQ_API_KEY>`.
-- Devuelve `{ message: <primera choice> }`.
+- Arma `[system(context), ...chatHistory, user(message)]`, llama a `https://api.groq.com/openai/v1/chat/completions` con `model: openai/gpt-oss-120b`, `temperature: 0.7`, `max_tokens: 1024`, `stream: true` (2026-09-02), `Authorization: Bearer <GROQ_API_KEY>`.
+- Si Groq responde `ok` con body, reenvía el stream SSE crudo tal cual (`Readable.fromWeb(groqResponse.body).pipe(res)`, `Content-Type: text/event-stream`) — no arma un JSON `{message}`, el frontend parsea las líneas `data: {...}` él mismo (ver [[Frontend Model Services Utils#Services|Groq.js]]). Si Groq no responde `ok` (falla antes de arrancar el stream: 401, rate limit, etc.), ese error sí llega completo de una y se reenvía como `502 { error }`.
 
 > [!success] Validación defensiva agregada (2026-08-19)
-> Antes no chequeaba que `data.choices` existiera antes de indexar `[0]` — un error de Groq (ver el bug de arriba, así se destapó) tiraba un `TypeError` opaco capturado por el catch genérico. Ahora: `if (!response.ok || !data.choices?.[0]?.message?.content) { console.error(...); return res.status(502)... }` antes de leer el contenido — loguea el `status` + body completo de Groq en el server (para diagnosticar la próxima vez que pase algo así) y responde `502` con el mismo mensaje genérico al cliente.
+> Antes no chequeaba que `data.choices` existiera antes de indexar `[0]` — un error de Groq (ver el bug de arriba, así se destapó) tiraba un `TypeError` opaco capturado por el catch genérico. Ahora: `if (!response.ok || !data.choices?.[0]?.message?.content) { console.error(...); return res.status(502)... }` antes de leer el contenido — loguea el `status` + body completo de Groq en el server (para diagnosticar la próxima vez que pase algo así) y responde `502` con el mismo mensaje genérico al cliente. Esta validación era sobre la respuesta NO-streaming; con `stream:true` (2026-09-02) el chequeo equivalente es solo `!groqResponse.ok || !groqResponse.body`, ya no hay `data.choices` que indexar acá — el parseo de cada `delta.content` pasó al frontend.
+
+> [!success] Compresión rompía el streaming — corregido (2026-09-02)
+> `app.use(compression())` en `server.js` comprime **todas** las respuestas por defecto, `/groq/chat` incluida — gzip/brotli necesitan juntar suficiente buffer antes de flushear, así que el navegador recibía el SSE completo de una sola vez al final en vez de ir mostrando texto (confirmado con un `fetch`+reader crudo: sin el fix, un solo `chunk` de ~190KB llegaba a los ~1.8s; con el fix, decenas de chunks chicos repartidos a lo largo de toda la generación). El primer intento de excluir la ruta con `filter: (req) => req.path === '/groq/chat' ? false : ...` no funcionó: dentro del router montado en `/groq`, Express reescribe `req.url`/`req.path` al path relativo (`/chat`) mientras dura ese middleware/handler, así que el filtro (evaluado en `onHeaders`, ya dentro del handler) nunca matcheaba. Fix: comparar contra `req.originalUrl` en cambio, que se mantiene intacto durante todo el ciclo del request sin importar el mounting de routers.
+
+> [!info] `gpt-oss-120b` separa el streaming de razonamiento del de contenido
+> Cada chunk SSE trae `delta.reasoning` (chain-of-thought, `channel: "analysis"`) o `delta.content` (la respuesta visible), nunca ambos a la vez — confirmado capturando el stream crudo con `curl -N`. El parser de `Groq.js` solo mira `delta.content`, así que los tokens de razonamiento se descartan solos sin lógica extra para filtrarlos. Para una pregunta simple, la fase de razonamiento puede tardar más que la respuesta final en sí (varios segundos de `reasoning` antes de que arranque el primer `content`).
 
 ## `POST /groq/title`
 
@@ -50,8 +56,11 @@ Proxy hacia la [API de Groq](https://groq.com/) (modelo `openai/gpt-oss-120b`), 
 Servicio frontend [[Frontend Model Services Utils#Services|Groq.js]] (`window.groq`, instancia global creada en `KNEOS.js`), usado por:
 - [[KneAI]] para responder mensajes (`ask`, con historial) y auto-titular chats nuevos (`getTitle`).
 - [[TxtFile]] (desde 2026-07-30) para dos botones del editor, ambos con `ask` sin historial (`chatHistory=[]`, cada pedido independiente):
-  - Botón general: la respuesta se previsualiza en un popup (Aceptar/Volver/Cancelar) antes de insertarse al final de la nota — no se agrega automáticamente ni queda en una burbuja de chat.
-  - Menú contextual "Preguntarle a KneAI" (click derecho, solo aparece con texto seleccionado): la respuesta reemplaza directamente el fragmento seleccionado, sin preview ni confirmación — el prompt de sistema es distinto (reescribe un fragmento dado según una instrucción, en vez de responder libremente).
+  - Botón general: la respuesta se va escribiendo en el preview del popup a medida que streamea (2026-09-02); al terminar se agregan Aceptar/Volver/Cancelar — no se agrega automáticamente ni queda en una burbuja de chat.
+  - Menú contextual "Preguntarle a KneAI" (click derecho, solo aparece con texto seleccionado): la respuesta va reemplazando en vivo el fragmento seleccionado (un placeholder de una sola línea que se llena a medida que streamea, restaurando el texto original si falla) — sin preview ni confirmación; el prompt de sistema es distinto (reescribe un fragmento dado según una instrucción, en vez de responder libremente).
+- [[Kmd]] (`_cmdKneAi`) va reescribiendo la misma línea de espera con el texto acumulado a medida que streamea, en vez de esperar la respuesta completa (2026-09-02).
 
-> [!warning] El cliente frontend no maneja errores
-> A diferencia de los demás servicios, `Groq.js` (frontend) no tiene try/catch propio — un fallo de red o `!response.ok` se propaga como excepción no controlada hacia `KneAI.js`. Ver [[Deuda Técnica]].
+> [!info] `ask(context, message, chatHistory, onChunk)` — streaming agregado (2026-09-02)
+> `Groq.js` (frontend) ya no llama a `apiFetch` para `/chat` (ese helper espera un JSON de una sola respuesta) — hace su propio `fetch` + `response.body.getReader()`, decodifica de a chunks (`TextDecoder`, `{stream:true}`), separa por `\n` guardando la última línea (puede venir cortada a la mitad) para completarla en la vuelta siguiente, y por cada línea `data: {...}` completa con `delta.content` no vacío llama a `onChunk(fullAcumuladoHastaAhora)` — el caller solo pisa su `innerHTML`/`textContent` con ese valor en cada llamada, no concatena nada él mismo. `onChunk` es opcional (`getTitle` no lo usa). Devuelve el texto completo final (o `null` si falló) para persistir/loguear como antes.
+>
+> El try/catch alrededor de todo esto sigue existiendo (ver el punto de abajo, ya resuelto desde 2026-07-27) — un error de red o `!response.ok` cae ahí, loguea y devuelve `null`, igual que la versión no-streaming.

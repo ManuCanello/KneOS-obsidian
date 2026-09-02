@@ -40,7 +40,7 @@ Clientes HTTP hacia el backend, uno por dominio, todos montados sobre un wrapper
 |---|---|---|
 | `IconServices` | `newIcon`, `changeDesktopPlace`, `changeParent`, `changeSrc`, `changeName`, `changeLastOpened`, `changeFav`, `changePin`, `getIcons`, `getIconsByParent`, `trashIcon`, `restoreIcon`, `getRecycleBinIcons`, `purgeIcon` (2026-07-31, ex `deleteIcon` — ver [[RecycleBin]]) | [[Módulo Icon]] |
 | `KneAiServices` | `newChat(chat_name)`, `newMessage(chat_id, role, message)` (2026-07-30: ahora devuelve `message_id`, antes devolvía `chat_id` — nunca llegaba en la respuesta, siempre era `undefined`), `getUserChats`, `editChatName`, `getChatsMessage`, `deleteChat(chat_id)`, `deleteMessage(message_id)` (2026-07-30) | [[Módulo KneAI]] |
-| `Groq` | `ask(context, message, chatHistory)`, `getTitle(firstMessage)` | [[Módulo Groq]] |
+| `Groq` | `ask(context, message, chatHistory, onChunk?)` (2026-09-02: parsea el SSE de `/groq/chat` a mano, `onChunk(fullSoFar)` opcional por cada delta — ver [[Módulo Groq]]), `getTitle(firstMessage)` | [[Módulo Groq]] |
 | `session` (función `startSession()`, antes `obtenerPcId()`) | — | [[Módulo Session]] |
 | `TxtServices` | `saveContent(id_icon, txtcontent)`, `getContent(id_icon)` | [[Módulo Txt]] |
 | `KfruitServices` | `getKeybinds`, `updateKeybinds`, `getScores`, `insertScore` | [[Módulo Kfruit]] |
