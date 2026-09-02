@@ -65,13 +65,26 @@ Detectar "¿esto es una carpeta?" se hace por duck-typing (`typeof archivo._load
 | `type` | Solo `.txt`. `TxtServices.getContent(id)` devuelve HTML de un `contenteditable`; se convierte a texto plano con un helper de módulo (`htmlToPlainText`) que pasa `<br>`/cierre de `<div>`/`<p>` a `"\n"` antes de sacar el resto de las etiquetas. |
 | `echo` | Imprime el texto crudo de la línea (no el tokenizado, para no perder comillas/espacios múltiples); sin args imprime `ECO está activado.`. |
 | `exit` | `this.cerrarVentana()` (idéntico a cualquier otro archivo, ver `File.cerrarVentana`). |
-| `kneai` | `window.groq.ask(contexto, texto, this._aiHistory, onChunk)` (mismo `Groq`/`/groq/chat` global que usa [[KneAI]] y [[TxtFile]]). **Streaming (2026-09-02):** el callback reescribe la misma línea `lineaEspera` (`.kmdLine`, arranca con "Consultando a kneAi...") con el texto acumulado prefijado `[kneAi] ` por renglón (`.kmdOutput` hereda `white-space:pre-wrap`, así que una sola `.kmdLine` puede tener varios `\n` adentro) — no hace falta borrar la línea y crear otra. `null` → la misma línea pasa a mostrar el mensaje de fallo, sin romper (mismo convenio que esas apps); ojo con el rate limit de 10 req/min por sesión (`groqLimiter`, ver [[Módulo Groq]]). |
+| `kneai` | `window.groq.ask(contexto, texto, this._aiHistory, onChunk)` (mismo `Groq`/`/groq/chat` global que usa [[KneAI]] y [[TxtFile]]). **Streaming (2026-09-02):** el callback reescribe la misma línea `lineaEspera` (`.kmdLine`, arranca con "Consultando a kneAi...") con el texto acumulado prefijado `[kneAi] ` por renglón (`.kmdOutput` hereda `white-space:pre-wrap`, así que una sola `.kmdLine` puede tener varios `\n` adentro) — no hace falta borrar la línea y crear otra. `null` → la misma línea pasa a mostrar el mensaje de fallo, sin romper (mismo convenio que esas apps); ojo con el rate limit de 10 req/min por sesión (`groqLimiter`, ver [[Módulo Groq]]). **Conoce los comandos y puede ejecutarlos (2026-09-02)** — ver sección propia más abajo. |
 | `curl [-i\|-I] <url>` (2026-07-31, nuevo) | Ver sección propia más abajo. |
 | `run juego` (2026-08-14, nuevo) | Corre ahorcado/kdle/blackjack/flipcoin/tetris/carrera **dentro de la terminal**, sin abrir una `Window` nueva. Ver sección propia más abajo. |
 | `map [ciudad\|lat lon [zoom]]` (2026-08-21, nuevo) | Abre [[KneMap]] **dentro de la terminal**, mismo mecanismo de takeover que `run` (ver `_runInline` más abajo). Sin argumentos usa el centro por defecto de `KneMap` (Buenos Aires); con una ciudad busca en `MAP_CIUDADES` (tabla fija, tokio/londres/paris/etc.); con dos o tres, `lat lon [zoom]`. |
 | `help` | Tabla de texto fija (no derivada de la tabla de despacho interna), para no perder el formato exacto pedido originalmente por el usuario. |
 
 Errores de comando (ruta/archivo inexistente, comando no reconocido, "Acceso denegado.") se muestran como **texto CMD real**, en el verde monocromático de siempre — no contradice la regla de "no mostrar ningún indicador de error" de [[Reglas]]: en una terminal el texto **es** la interfaz, no un adorno de error agregado encima; no hay rojo, ni bordes, ni shake.
+
+## `kneai` conoce los comandos y puede ejecutarlos (2026-09-02)
+
+`HELP_ROWS` (la misma tabla comando→descripción que arma `help`, ver arriba) se extrajo a una constante de módulo para no mantener dos copias del mismo texto: `_cmdHelp()` la consume para el grid visual, `_cmdKneAi` la vuelca en texto plano dentro del prompt de sistema — así kneAi responde preguntas del tipo "¿qué comandos tenés?"/"¿cómo creo una carpeta?" con la lista real, no una inventada.
+
+> [!success] kneAi puede resolver un pedido EJECUTÁNDOLO, no solo explicándolo
+> El prompt de sistema le da a elegir entre dos formatos de respuesta: si el pedido del usuario se resuelve con uno de los comandos de la tabla (crear/borrar/mover/renombrar algo, listar el directorio, jugar, abrir el mapa, etc.), tiene que responder con **una sola línea exacta**: `#run <comando con sus argumentos>` — nada de explicación ni markdown alrededor. Si es una pregunta o algo que ningún comando resuelve, responde en texto plano normal, sin ese prefijo.
+>
+> `_cmdKneAi` intercepta la respuesta final (`respuesta.trim().match(/^#run\s+(.+)$/i)`) antes de darla por buena como texto: si matchea, reemplaza `lineaEspera` por `"Ejecutando: <comando>"` y llama a `this._runCommand(comandoAEjecutar)` — el mismo despachador que usa cualquier línea tipeada a mano. **Cero lógica de comandos duplicada acá**: `mkdir`, `dir`, `run`, `map`, etc. se ejecutan con su implementación real tal cual, kneAi solo decide *cuál* correr.
+>
+> **Freno explícito contra `kneai` recursivo:** si el comando generado empezara con `kneai` (ej. el modelo alucinando `#run kneai ...`), se descarta y se trata la respuesta como texto plano en su lugar — sin este freno, una cadena de auto-invocaciones dispararía llamadas a Groq sin parar, y Groq [[Módulo Groq|cuesta dinero real por request]].
+>
+> Verificado en vivo (Playwright + servidor real): "mostrame que hay en este directorio" → `#run dir` → imprime el `dir` real; "creá una carpeta llamada PruebaIA" → `#run mkdir PruebaIA` → la carpeta aparece de verdad en el escritorio (confirmado con un `dir` a mano después, contador de "dir(s)" subió de 1 a 2).
 
 ## `tree`, `help` y `dir` alineados con CSS grid/bloque (2026-07-31)
 
