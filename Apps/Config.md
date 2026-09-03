@@ -11,7 +11,7 @@ tags:
 `public/KneOS/js/apps/Config.js` — extiende [[File]]. Extensión `"config"`, ícono propio `sources/appIcon/config.svg` (engranaje, mismo estilo Material-outline de `calc.svg`/`txt.svg`: un único `<path>` `fill="currentColor"`, viewBox 24×24). Agregada 2026-08-19: primera app del panel de "Configuración" del sistema, hoy con un único ajuste.
 
 > [!abstract] Qué hace
-> Deja elegir el color de toda la interfaz de KneOS entre 9 opciones (Verde de fábrica, Rojo, Naranja, Amarillo, Azul, Celeste, Rosado, Morado, Turquesa) — una grilla de 3×3 swatches, cada uno con una muestra del color real + su nombre. Clickear uno repinta **todo** KneOS al instante (no hay botón "Guardar" aparte) y persiste la elección por sesión — ver [[Módulo Theme]].
+> Deja elegir el color de toda la interfaz de KneOS entre 10 opciones (Verde de fábrica, Rojo, Naranja, Amarillo, Azul, Celeste, Rosado, Morado, Turquesa, Blanco — el último agregado 2026-09-02) — una grilla de swatches, cada uno con una muestra del color real + su nombre. Clickear uno repinta **todo** KneOS al instante (no hay botón "Guardar" aparte) y persiste la elección por sesión — ver [[Módulo Theme]].
 
 ## Constructor(name)
 
@@ -23,9 +23,12 @@ Reemplaza la `Window` por defecto de `File` por una **`ViewWindow`** (`{ width: 
 
 Todo el mecanismo de color vive en `public/KneOS/js/model/themeColors.js`, no en `Config.js` — Config solo es la UI que lo dispara:
 
-- **`THEME_COLORS`**: objeto `{clave: {label, color, dim}}` para las 9 opciones. `color` pisa **tanto** `--primary-color` como `--primary-glow` (son el mismo valor también para el verde de fábrica, ver `base.css`); `dim` pisa `--primary-dim` a ~80% del brillo de `color` (mismo ratio que `#00ff41`/`#00cc33` de fábrica). `--primary-background` se queda negro sea cual sea el color — es el fondo CRT, no la paleta.
+- **`THEME_COLORS`**: objeto `{clave: {label, color, dim}}` para las 10 opciones. `color` pisa **tanto** `--primary-color` como `--primary-glow` (son el mismo valor también para el verde de fábrica, ver `base.css`); `dim` pisa `--primary-dim` a ~80% del brillo de `color` (mismo ratio que `#00ff41`/`#00cc33` de fábrica). `--primary-background` se queda negro sea cual sea el color — es el fondo CRT, no la paleta.
 - **`applyThemeColor(clave)`**: `document.documentElement.style.setProperty(...)` de las tres variables — al ser inline en el `<html>`, gana por especificidad a la declaración de `:root` en `base.css` sin tocar ningún stylesheet, y como *toda* regla `var(--primary-*)` del proyecto cuelga de ese mismo elemento, un solo llamado repinta la interfaz entera (íconos SVG con `mask-image` incluidos, ver `utils/iconoStyle.js`). Termina despachando `window.dispatchEvent(new CustomEvent(THEME_COLOR_EVENT))` (2026-08-19) — el único mecanismo de "avisar" que el color cambió; lo escuchan [[Camera]] (preview sin guardar) e [[ImgFile]] (foto ya guardada) para repintarse en caliente sin que Config necesite saber que existen.
 - **`DEFAULT_THEME_COLOR = "verde"`**: fallback si `window.themeColorActual` no está seteado o el backend devuelve una clave que ya no existe en `THEME_COLORS`.
+
+> [!warning] Agregar un color acá NO alcanza
+> `THEME_COLORS` está duplicado en el backend como `THEME_COLOR_KEYS` (`utils/validation.js`, ver [[Módulo Theme]]) — al agregar "Blanco" (2026-09-02) el swatch aparecía y aplicaba bien en el momento, pero `setColor` fallaba con `400 Color inválido` porque esa segunda lista no se había tocado. Cualquier clave nueva en `THEME_COLORS` tiene que sumarse también a mano en `THEME_COLOR_KEYS`, o la persistencia se rompe en silencio para esa opción (el error solo se ve en la consola del navegador, no hay cartel en la UI).
 - **`leerColorCSS(variable)` / `mezclarTono(t)`** (2026-08-19): helpers de mezcla compartidos, subidos acá desde lo que antes era lógica privada de `Camera._leerColorCSS`/`_construirPaleta` — `mezclarTono(t)` interpola entre `--primary-background` y `--primary-color` según `t` (0-1) y es lo que usan tanto Camera (dither en vivo/preview) como ImgFile (repintar una foto guardada) para traducir un byte de gris a color del tema vigente.
 
 `Config._crearContenido()` arma la grilla iterando `Object.entries(THEME_COLORS)`; cada swatch es un `<button>` con un `<span>` de muestra (`background-color` inline, el color real) + un `<span>` de etiqueta — **nunca** el atributo `title` (ver [[Reglas]]), el nombre siempre es texto visible. `.configSwatch--activo` (borde+glow, `var(--primary-glow)`) marca la opción vigente.

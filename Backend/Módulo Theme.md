@@ -20,7 +20,7 @@ Persiste el color del sistema elegido en [[Config]]: una clave fija (`"verde"`, 
 ## Controllers (`controllers/themeController.js`)
 
 - **`getUserColor`**: `getColor(req.pcId)` → `{ color }`.
-- **`editColor`**: valida `color` del body con `isValidThemeColor` (`utils/validation.js`) — `400 { error: "Color inválido" }` si no es una de las 9 claves. Llama `setColor(req.pcId, color)` → `{ success: true }`.
+- **`editColor`**: valida `color` del body con `isValidThemeColor` (`utils/validation.js`) — `400 { error: "Color inválido" }` si no es una de las 10 claves. Llama `setColor(req.pcId, color)` → `{ success: true }`.
 
 ## Modelo (`models/themeModel.js`)
 
@@ -29,7 +29,7 @@ Persiste el color del sistema elegido en [[Config]]: una clave fija (`"verde"`, 
 
 ## Validación (`utils/validation.js`)
 
-`isValidThemeColor(value)` — `THEME_COLOR_KEYS` es un `Set` con las mismas 9 claves que `THEME_COLORS` en `public/KneOS/js/model/themeColors.js` (el backend no comparte módulos con el frontend, mismo patrón que `PHOTO_PIXEL_COUNT` duplicado en [[Módulo CameraPhoto]] — ver ese módulo para la nota completa de por qué se duplica la constante en vez de acoplar los dos lados).
+`isValidThemeColor(value)` — `THEME_COLOR_KEYS` es un `Set` con las mismas 10 claves que `THEME_COLORS` en `public/KneOS/js/model/themeColors.js` (el backend no comparte módulos con el frontend, mismo patrón que `PHOTO_PIXEL_COUNT` duplicado en [[Módulo CameraPhoto]] — ver ese módulo para la nota completa de por qué se duplica la constante en vez de acoplar los dos lados). Esta duplicación es manual y silenciosa: al sumar "Blanco" a `THEME_COLORS` (2026-09-02) `THEME_COLOR_KEYS` quedó desactualizado un rato — el swatch nuevo aplicaba bien client-side pero `PATCH /themeRoutes/color` devolvía `400` en cuanto se lo elegía, sin ningún aviso visible en la UI (`Config._elegirColor` solo hace `console.warn` si `setColor` falla, ver [[Config#Elegir un color (_elegirColor)]]).
 
 ## Tabla `theme_settings` (`prisma/schema.prisma`, 2026-08-19)
 

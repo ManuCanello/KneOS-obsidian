@@ -185,6 +185,8 @@
   },
   "active": "a0e975ef826df478",
   "lastOpenFiles": [
+    "Backend/Módulo Truco.md",
+    "Apps/Truco.md",
     "Escena 3D.md.tmp.17908.3459ca6e06b1",
     "Escena 3D.md.tmp.17908.985bb1943d9d",
     "Escena 3D.md.tmp.28144.6068051e1c1c",
@@ -209,7 +211,6 @@
     "Apps/Kmd.md.tmp.32268.af7360155693",
     "Apps/Kmd.md.tmp.32268.7468ea3aeb03",
     "Apps/Kmd.md.tmp.32268.cdbec9782e12",
-    "Apps.md.tmp.32268.f45970dd7d59",
     "Apps/Maxwell.md",
     "Apps/TxtFile.md",
     "Backend/Módulo Txt.md",
@@ -219,7 +220,6 @@
     "Backend.md",
     "Core/Clock.md",
     "Backend/Módulo Folder Views.md",
-    "Backend/Módulo Folder Styles.md",
-    "KneOS Portfolio.md"
+    "Backend/Módulo Folder Styles.md"
   ]
 }
