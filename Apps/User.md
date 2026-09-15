@@ -23,12 +23,12 @@ tags:
 > [!info] Rename completo, sin duplicar reglas
 > Todas las clases y `@keyframes` que antes llevaban el prefijo `contacts` (`.contactsApp`, `.contactsPanel`, `.contactsHeader`, `.contactsNeonText`, `contactsPowerOn`, etc.) pasaron a `user*` — coherente con el rename del archivo/clase. De paso se unificaron reglas que estaban duplicadas letra por letra:
 > - **Glow de borde**: `.userApp` y `.userPanel` comparten una sola regla (`position: relative; box-shadow: 0 0 14px color-mix(...)`) en vez de que cada uno declare su propio `box-shadow` — y de paso `.userApp` ahora también lleva `border: 2px solid var(--primary-color)`, o sea el contenedor principal tiene el mismo glow de borde que cualquier panel interno.
-> - **Glow neón**: `.userNeonText`, `.userLinkIcon`, `.userLinkLabel`, `.userFooterText` y `.userBatteryIcon` comparten una sola declaración de `filter: drop-shadow(...)` + `animation: userNeonFlicker 15s linear infinite` — antes cada uno repetía el mismo `filter`/`animation` por separado.
+> - **Glow neón**: `.userNeonText`, `.userLinkIcon`, `.userLinkLabel`, `.userFooterText` y `.userBatteryIcon` comparten una sola declaración de `filter: drop-shadow(...)` + `animation: userNeonFlicker 10s linear infinite` (ciclo reducido de 15s a 10s el 2026-09-15) — antes cada uno repetía el mismo `filter`/`animation` por separado.
 
-## Ícono de batería en el header (`_crearBateria()`, 2026-08-07)
+## Ícono de batería en el header (`_crearBateria()`, 2026-08-07; barras invertidas 2026-09-15)
 
 > [!info] SVG inline armado a mano, no vía mask
-> A diferencia de los demás íconos de la app (mask + `background-color: currentColor`), la batería (`sources/core/battery.svg`) se arma como SVG real (`document.createElementNS`) porque necesita **dos piezas independientes animadas por separado**: un `<path>` fijo con el marco completo (borde + terminal, sin las 3 barritas de carga originales del SVG) y un `<rect>` aparte para **solo la última barrita** (la más cercana al terminal) — las otras dos simplemente no se dibujan, como si ya se hubieran gastado. Esa única barrita tiene `.userBatteryBar { animation: userBatteryBlink 1.2s ease-in-out infinite; }` (opacity 1↔0.15) para leerse como "batería a punto de quedarse sin carga". El ícono entero (`.userBatteryIcon`) participa del glow neón compartido (ver arriba). Reemplaza al viejo `espacioHeader` (un `<p>` vacío que solo hacía de relleno para el `justify-content: space-between`).
+> A diferencia de los demás íconos de la app (mask + `background-color: currentColor`), la batería (`sources/core/battery.svg`) se arma como SVG real (`document.createElementNS`) porque necesita **piezas independientes animadas por separado**: un `<path>` fijo con el marco completo (borde + terminal, sin las 3 barritas de carga originales del SVG) y 3 `<rect>` aparte. Desde 2026-09-15, las **dos barritas más lejanas del terminal** (x=6, x=10) son las que parpadean (`.userBatteryBar { animation: userBatteryBlink 1.2s ease-in-out infinite; }`, opacity 1↔0.15) y la **última** (x=14, la más cercana al terminal) queda fija y atenuada (`.userBatteryBar--gastada`, opacity 0.2, "ya se gastó") — antes era al revés (solo la última parpadeaba). Se lee igual como "batería a punto de quedarse sin carga". El ícono entero (`.userBatteryIcon`) participa del glow neón compartido (ver arriba). Reemplaza al viejo `espacioHeader` (un `<p>` vacío que solo hacía de relleno para el `justify-content: space-between`).
 
 ## Efecto holograma sobre la foto (`.userHologram`, 2026-08-07)
 
@@ -52,7 +52,7 @@ tags:
 
 > [!info] De 4 variantes de delay a 6, y sin defaults compartidos
 > Antes de este ajuste, ~14 elementos (los 4 links —ícono+label sin variante asignada—, `.userFooterText` y `.userBatteryIcon`, todos sin clase `--a/b/c/d`) titilaban en el instante exacto `0s`, exactamente en sync con el grupo `--a`. Se corrigió en dos frentes:
-> - **`.userNeonText--a..d` → `--a..f`** (6 variantes en vez de 4, `user.css`), separadas 2.5s en vez de ~3.5-4s dentro del mismo ciclo de 15s de `userNeonFlicker` — y **todo** elemento con glow ahora recibe una variante explícita, nada queda en el delay por defecto (0s). `NEON_DELAYS` (array de 6 nombres de clase) en `User.js` se cicla por índice para los 4 links vía `_crearLink(..., delay)`.
+> - **`.userNeonText--a..d` → `--a..f`** (6 variantes en vez de 4, `user.css`), separadas ~1.667s dentro del ciclo de 10s de `userNeonFlicker` (originalmente 2.5s dentro de un ciclo de 15s, reducido el 2026-09-15) — y **todo** elemento con glow ahora recibe una variante explícita, nada queda en el delay por defecto (0s). `NEON_DELAYS` (array de 6 nombres de clase) en `User.js` se cicla por índice para los 4 links vía `_crearLink(..., delay)`.
 > - **`.userCornerDot--tl/tr/bl/br`**: antes sin `animation-delay` (los 4 puntos de cada panel pulsaban a la vez); ahora 0s/0.6s/1.2s/1.8s por posición, así corren en secuencia alrededor de cada panel en vez de parpadear todos juntos.
 
 ## Sistema de alturas: la fila de la foto manda
@@ -90,6 +90,21 @@ Arma la ficha completa a mano (`createElement` + `className`, sin loop de datos 
 ## Registro
 
 Como [[Maxwell]]/[[RecycleBin]]/Calculator, es una app "fija": entrada en `iconSrc.js` (`contacts` → `User`, `css: url(sources/appIcon/user.svg)`), en `defaultFiles.js` (nombre "Usuario") y en `filesUndeletable.js` (sigue como `"contacts"`, no se tocó) — no aparece en los menús "Nuevo" ni se puede borrar. Al igual que el resto de `defaultFiles`, solo aparece automáticamente en un escritorio **nuevo** (`IconServices.getIcons()` con cero filas); no aparece retroactivamente en escritorios ya persistidos.
+
+## Todas las animaciones ambientales a 20s (2026-09-15, ver historial 15s→10s→20s)
+
+> [!info] Duraciones unificadas
+> Todo `@keyframes ... infinite` de `user.css` corre en un ciclo de 20s (antes cada uno tenía su propia duración — `userScreenGlitch` 9s, `userScanlines` 5s, `userDotPulse` 2.4s, `userBatteryBlink` 1.2s, `userHologramFlicker` 3s, `userHologramSweep` 4s, `userNeonFlicker` 15s — se pasaron primero todas a 10s parejo, y luego, a pedido explícito de "hazlo cada más tiempo", a 20s). Los delays escalonados que dependían del período se reescalaron para seguir repartidos parejo dentro de los 20s: `.userCornerDot--tl/tr/bl/br` en 0/5/10/15s, `.userNeonText--a..f` en pasos de ~3.333s. Quedan afuera (no son loops ambientales): `userPowerOn` (0.5s, se dispara una sola vez al montar) y `userLinkFlicker` (0.25s, se dispara con `:hover`).
+
+## Fondo de `.userAccess` adaptable al tema (2026-09-15)
+
+> [!info] De hex fijo a `color-mix` sobre `--primary-dim`
+> `.userAccess` tenía `background-color: #00cc332e` hardcodeado (verde de fábrica con ~18% de alpha) — no cambiaba si el usuario elegía otro color en [[Config]]. Pasó a `background-color: color-mix(in srgb, var(--primary-dim) 18%, transparent)`, mismo tono/alpha visual con el verde por defecto pero ahora sigue a `--primary-dim` (seteada por `applyThemeColor`, ver `model/themeColors.js`) sin necesitar JS ni suscribirse a `THEME_COLOR_EVENT` — es una CSS var, se repinta sola.
+
+## Filtro de color en el holograma de la foto (`.userHologram`, 2026-09-15)
+
+> [!info] `background-blend-mode: color`, no canvas
+> La foto (`bitmap.png`) se veía siempre en su color original sin importar el tema elegido. Se le aplicó un filtro dinámico al tema, mismo espíritu que el recoloreo por `--primary-color` de [[ImgFile]] pero implementado nativo en CSS (acá la imagen es un `background-image`, no un `<canvas>` con píxeles propios, así que no hace falta replicar `_dibujar()`): `.userHologram` ahora declara dos capas de `background-image` (un degradé sólido en `var(--primary-color)` arriba, `var(--foto)` abajo) con `background-blend-mode: color` — toma el matiz de `--primary-color` y conserva la luminosidad original de la foto, igual resultado visual que `mezclarTono()` pero sin JS por frame. `User.js` pasó de tres `style.background*` inline a un solo `style.setProperty("--foto", ...)`, mismo patrón que `--icono` en `_crearLink`.
 
 ## Accesibilidad de movimiento
 
