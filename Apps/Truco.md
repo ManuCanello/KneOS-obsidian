@@ -39,7 +39,10 @@ Tres campos separados evitan un bug de "a quién le toca" cuando hay una cadena 
 
 ## Jugable en dos modos (escritorio + consola)
 
-Igual patrón que BlackJack: `_crearContenido()` bifurca por `this._modoTerminal`. El modo consola agrega `truco` a `RUN_GAMES` en [[Kmd]] (`run truco`); cada pantalla tiene su gemela en texto plano (`_mostrarMenuConsola`, y `_iniciarPartida`/`_esperarAccionConsola` construyen la mesa sin clases de `game.css`). En consola las cartas siguen siendo arte ASCII en un `<pre>` (mismo estilo de caja `┌─────────┐` que BlackJack, con padding calculado por carta porque el número puede ser de 1 o 2 caracteres, y el palo es el carácter ♠♣♦♥ tal cual) — una terminal de texto no puede mostrar un ícono. Logo "TRUCO" con la misma fuente de bloque 5×5 por letra que [[FlipCoin]].
+Igual patrón que BlackJack: `_crearContenido()` bifurca por `this._modoTerminal`. El modo consola agrega `truco` a `RUN_GAMES` en [[Kmd]] (`run truco`); cada pantalla tiene su gemela en texto plano (`_mostrarMenuConsola`, y `_iniciarPartida`/`_esperarAccionConsola` construyen la mesa sin clases de `game.css`). En consola las cartas siguen siendo arte ASCII en un `<pre>` (mismo estilo de caja `┌─────────┐` que BlackJack, con padding calculado por carta porque el número puede ser de 1 o 2 caracteres, y el palo es el carácter ♠♣♦♥ tal cual) — una terminal de texto no puede mostrar un ícono. El modo consola sigue imprimiendo el texto plano "TRUCO" (`_mostrarMenuConsola`, sin cambios).
+
+> [!info] Logo: banner ASCII fijo (2026-09-16, reemplaza la fuente de bloque 5×5)
+> Antes el logo del menú gráfico se generaba letra por letra (`_getLogoLines()`, fuente de bloque 5×5 propia, deletreando "TRUCO", mismo esquema que FlipCoin). Ahora es un banner ASCII grande fijo (pedido explícito del usuario, texto literal pegado), guardado como constante de módulo `LOGO = String.raw\`...\`` (evita escapar a mano cada `\` del arte) y usado directo como `pre.textContent` en `_mostrarMenu()` — `_getLogoLines()` se borró. Ver [[Hangman]] para el mismo cambio y el motivo del `String.raw`.
 
 ## Palo real en el modo escritorio (2026-09-02)
 

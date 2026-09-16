@@ -25,7 +25,7 @@ Mismo patrón que `KfruitFruit` (ver [[Frontend Model Services Utils#Model|Kfrui
 
 ## Funciones de UI (menú)
 
-- `_getLogoLines()`: a diferencia del ASCII art dibujado a mano de Kfruit, usa el patrón más simple de `Truco._getLogoLines()` — un diccionario `FONT` de glifos 5×5 por letra (`K`/`P`/`O`/`L`) mapeado sobre `"KPOOL"`.
+- **Logo** (2026-09-16): banner ASCII grande fijo (pedido explícito del usuario, texto literal pegado), reemplaza al viejo `_getLogoLines()` (diccionario `FONT` de glifos 5×5 por letra `K`/`P`/`O`/`L` sobre `"KPOOL"`, mismo patrón que tenía `Truco._getLogoLines()`). Guardado como constante de módulo `LOGO = String.raw\`...\`` (evita escapar a mano cada `\` del arte) y usado directo como `pre.textContent` en `_mostrarMenu()`. Ver [[Hangman]] para el mismo cambio y el motivo del `String.raw`.
 - `_mostrarMenu()`: logo + una sola opción, "INICIAR JUEGO (1 VS 1)".
 - `_crearPanelJugador(numero)`: HUD lateral por jugador (título, tipo asignado o "SIN DEFINIR", lista de números propios ya embocados).
 - `async _initGame()`: arma `.kpool-juego` (panel jugador 1 + centro con turno/canvas/ayuda/volver + panel jugador 2), llama `_iniciarJuego` en un `setTimeout(...,0)` como Kfruit.

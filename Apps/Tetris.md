@@ -47,6 +47,13 @@ A diferencia del resto de los ports (JUGAR/VER PORCENTAJES), el menú principal 
 
 Reusa `.game`/`.mainMenu`/`.logo`/`.opciones`/`.volver`/`.game-boton` de `apps/game.css`, y `.tabla-controles`/`.tecla-btn`/`.lista-calificaciones`/`.fila-calificacion`/`.game-over-overlay`/`.game-over-letras`/`.game-over-casilla` de `Kfruit.css` (global una vez bundleado en `main.bundle.css`, no hace falta redefinirlas). `tetris.css` (reescrito 2026-08-14 junto con el render ASCII) ahora solo tiene `.tPantallaWrap` (contenedor centrado, mismo criterio que `.tTableroWrap` antes) y `.tPantalla` (el `<pre>`, `white-space:pre`, tamaño de fuente `clamp(6px,2.4cqw,20px)` — mismo patrón que `.ahEscena` en `hangman.css`/`.mainMenu .logo pre`). Las clases viejas (`.tHeader`/`.tStat`/`.tTablero`/`.tCelda`/`.tPanel`/`.tSiguiente`/`.tMensaje`) ya no existen.
 
+> [!info] Logo: banner ASCII fijo (2026-09-16, reemplaza la fuente de bloque 5×5)
+> Antes el logo se generaba letra por letra (`_getLogoLines()`, fuente de bloque 5×5 propia, deletreando "TETRIS"). Ahora es un banner ASCII grande fijo (pedido explícito del usuario, texto literal pegado), guardado como constante de módulo `LOGO = String.raw\`...\`` (evita escapar a mano cada `\` del arte) y usado directo como `pre.textContent` en `_mostrarMenu()` — `_getLogoLines()` se borró. Ver [[Hangman]] para el mismo cambio y el motivo del `String.raw`. El modo consola sigue imprimiendo el texto plano "TETRIS", sin cambios.
+>
+> **Nota**: el arte pegado por el usuario para este logo es byte a byte idéntico al que pegó para [[Kdle]] ("KDLE", 5 grupos de letra, no 6 como pediría "TETRIS") — se le preguntó si era intencional o un error de copiado y pidió seguir así igual ("termina"), así que ambos juegos muestran hoy el mismo banner en pantalla.
+
+Sí hereda la unificación de tamaño de `.mainMenu .logo pre` en `game.css` (`clamp(4px, 1.8cqw, 20px)`, subido de `18px` a pedido del usuario — ver nota en [[BlackJack]]), porque no tiene override propio.
+
 ## Persistencia
 
 `tetris_keybinds` (una fila por `pc_id`, upsert al primer `GET`, 5 columnas de teclas desde que se sumó `softdrop` 2026-08-14) y `tetris_score` (leaderboard global, sin `pc_id`) — ver [[Módulo Tetris]]. El Java original no persistía nada (a diferencia de FlipCoin/CarRace, que sí escribían resultados a archivo); ambas tablas son agregados nuevos del port, no una migración de algo que ya existiera.
