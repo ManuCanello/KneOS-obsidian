@@ -26,6 +26,9 @@ tags:
   > Hasta acá el logo de BlackJack era ~2× más ancho que el resto (Kfruit, etc.), así que pisaba el `clamp()` heredado con uno propio más chico (`.blackjackApp .logo pre { font-size: clamp(4px, 0.9cqw, 12px) }`) para no recortarse contra el `overflow: hidden` del menú. A pedido explícito del usuario ("todos los títulos de los juegos que tengan `pre` deben tener ese tamaño"), esa excepción se sacó — `.mainMenu .logo pre` en `game.css` ahora es `clamp(4px, 1.8cqw, 20px)` (subido de `18px`) para **todos** los juegos sin excepción, BlackJack incluido. Si el logo de BlackJack se ve recortado a anchos de ventana chicos, es el trade-off aceptado por ese pedido, no un bug.
   >
   > `.bjBoton`/`.tecla-btn` (Kfruit) siguen extendiendo `.game-boton` (borde/hover/disabled/`font-family: inherit` compartidos) y solo agregan su propio tamaño/padding — eso no cambió.
+  >
+  > [!info] Tamaño por defecto de `.game-boton`/`.game-input`/`.mainMenu .volver` (2026-09-17)
+  > Pedido puntual sobre [[Hangman]] ("ESCRIBIR PALABRA" y el botón "Confirmar") que se generalizó a todo `game.css`: `.game-boton` pasó a `font-size: 24px; padding: 0.5rem` (antes sin tamaño propio), `.game-input` de `clamp(14px, 2.5cqw, 20px)` fijo a `24px`, y `.mainMenu .volver` de `clamp(14px, 2.5cqw, 20px)` fijo a `24px` — mismo criterio que el logo unificado de arriba, "para todos los juegos" explícito del usuario. No toca los overrides per-app que ya pisaban estos valores con los suyos propios (`.bjBoton` 28px/`12px 20px`, `.tecla-btn` `0.4rem 1rem`, `.game-input` en CarRace/KneChat, `.volver` en Kpool) — esos siguen como estaban.
 
 ## Modelo (`js/model/`)
 
