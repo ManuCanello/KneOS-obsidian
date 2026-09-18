@@ -8,7 +8,7 @@ tags:
 
 ⬅️ Volver a [[Apps]]
 
-`public/KneOS/js/apps/KneChat.js` (clase `KneChat`) — extiende [[File]]. Extensión `"chat"`, ícono propio `sources/appIcon/knechat.svg` (burbuja de diálogo), `FileType.UTILITY`. Agregado 2026-08-18. No es un port de Java (a diferencia de BlackJack/Hangman/FlipCoin/Kdle/CarRace/Tetris) — es la primera pieza de tiempo real de todo el proyecto.
+`public/KneOS/js/apps/KneChat.js` (clase `KneChat`) — extiende [[File]]. Extensión `"chat"`, ícono propio `sources/appIcon/knechat.svg` (burbuja de diálogo), `FileType.UTILITY`. Agregado 2026-08-18. No es un port de Java (a diferencia de BlackJack/Hangman/FlipCoin/Kdle/VROOM/Tetris) — es la primera pieza de tiempo real de todo el proyecto.
 
 > [!abstract] Qué hace
 > Chat en vivo entre las sesiones que estén con la app abierta en ese momento: una sala pública `#GENERAL` compartida por todo el mundo, una sala `#NOVEDADES` de solo lectura para anuncios (2026-08-19), más DMs 1-a-1 que se abren clickeando un nombre en la lista de conectados. Historial persistido en Postgres. No hay cuentas de usuario — al entrar se elige un alias (3-16 caracteres, único) que queda colgado de la sesión anónima existente (`sessions.nickname`) y se reutiliza en visitas siguientes. Ver [[Módulo Chat]] para el backend y el protocolo WebSocket.

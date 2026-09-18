@@ -8,7 +8,7 @@ tags:
 
 ⬅️ Volver a [[Apps]]
 
-`public/KneOS/js/apps/Tetris.js` (clase `Tetris`) — extiende [[File]]. Extensión `"tetris"`, ícono propio `sources/appIcon/tetris.svg` (tetromino T, bloques), `src = null`. Sin `Window` propia: usa la `Window` completa por defecto de `File` (como BlackJack/Ahorcado/FlipCoin/CarRace), sin tamaño fijo. Agregado 2026-08-13, migrado desde `Juegos Java/Tetris-main`. Keybinds configurables y leaderboard sumados el mismo día, en una segunda pasada — ver [[Módulo Tetris]].
+`public/KneOS/js/apps/Tetris.js` (clase `Tetris`) — extiende [[File]]. Extensión `"tetris"`, ícono propio `sources/appIcon/tetris.svg` (tetromino T, bloques), `src = null`. Sin `Window` propia: usa la `Window` completa por defecto de `File` (como BlackJack/Ahorcado/FlipCoin/VROOM), sin tamaño fijo. Agregado 2026-08-13, migrado desde `Juegos Java/Tetris-main`. Keybinds configurables y leaderboard sumados el mismo día, en una segunda pasada — ver [[Módulo Tetris]].
 
 > [!abstract] Qué hace
 > Port del Tetris de consola en Java original (clases `Fichas`/`T`/`C`/`L`/`J`/`I`/`Z`/`S`/`Tablero`/`Juego`/`Niveles`/`Puntos`/`Pantalla`). Mismo tablero de 24 filas × 12 columnas (paredes en columna 0/11 desde la fila 4, piso en la fila 23, filas 0-3 sin pared como zona de aparición), las mismas 7 piezas con sus mismas rotaciones, mismo punto de aparición (`posX=4, posY=0`) y misma puntuación (+10 por pieza colocada, +100 por línea despejada, plana — sin bonus extra por combo). Controles configurables (mover/rotar/caída dura), leaderboard con 3 iniciales al perder — ninguna de las dos cosas existía en el Java original, ambas se agregaron para calzar con el estándar que ya tiene [[Kfruit]] entre las apps `FileType.GAME`. El bucle de consola (`Thread.sleep` + `borrarPantalla()`) pasó a un bucle `async`/`await` con `setTimeout`.
@@ -39,7 +39,7 @@ A diferencia del resto de los ports (JUGAR/VER PORCENTAJES), el menú principal 
 
 ## Tablero y piezas (`Tetris.js`)
 
-- `PIEZAS`: mismas 7 formas/rotaciones que `T`/`C`/`L`/`J`/`I`/`Z`/`S` (matrices 0/1 en vez de `char[][]` de `'0'`/`'1'`). `C` es el nombre que el Java le da a la pieza cuadrada (no tiene relación con el color cian de CarRace).
+- `PIEZAS`: mismas 7 formas/rotaciones que `T`/`C`/`L`/`J`/`I`/`Z`/`S` (matrices 0/1 en vez de `char[][]` de `'0'`/`'1'`). `C` es el nombre que el Java le da a la pieza cuadrada (no tiene relación con el color cian de VROOM).
 - `_puedeMoverse`/`_fijarPieza`/`_esDerrota`/`_detectarYLimpiarLineas`: equivalentes directos de `colisionAbajo/Derecha/Izquierda` (unificados en un solo chequeo de límites+celda ocupada), `imprimirPieza()`, `perdedor()` y `detectarLineas()`/`borrarLineas()`/`moverHaciaAbajo()`.
 - **Render ASCII real, no grilla CSS (reescrito 2026-08-14, a pedido del usuario)**: la primera versión dibujaba el tablero como una grilla CSS (`.tTablero`, 24×12 `div.tCelda`, celdas distinguidas por opacidad). Se reemplazó por un único `<pre class="tPantalla">` armado línea por línea igual que `dibujarTablero()` del Java: `'#'` pared/piso, `'@'` pieza fija, `'1'` pieza activa (literal, igual que el `char[][]` de `Fichas` — se probó por un momento usar la letra del tipo de pieza para distinguir formas, pero el usuario pidió volver a `'1'` fijo), `' '` vacío; las filas 4-7 llevan pegado el mismo texto que el original (`"Puntaje:"`/`"Lineas:"`/`"Nivel:"`/`"Proxima"`) y la próxima ficha se imprime debajo desde la fila 8 — mismo layout 1:1, un solo bloque monoespaciado en vez de HUD separado. `_render()` reconstruye el `<pre>` completo en cada frame; mientras hay una fila animando (`this._animando = {fila, letras}`) esa fila se sobreescribe con las letras reveladas hasta el momento y no se dibuja la ficha activa encima (gateado por `!this._bloqueado`, ver sección de condición de carrera).
 
@@ -56,7 +56,7 @@ Sí hereda la unificación de tamaño de `.mainMenu .logo pre` en `game.css` (`c
 
 ## Persistencia
 
-`tetris_keybinds` (una fila por `pc_id`, upsert al primer `GET`, 5 columnas de teclas desde que se sumó `softdrop` 2026-08-14) y `tetris_score` (leaderboard global, sin `pc_id`) — ver [[Módulo Tetris]]. El Java original no persistía nada (a diferencia de FlipCoin/CarRace, que sí escribían resultados a archivo); ambas tablas son agregados nuevos del port, no una migración de algo que ya existiera.
+`tetris_keybinds` (una fila por `pc_id`, upsert al primer `GET`, 5 columnas de teclas desde que se sumó `softdrop` 2026-08-14) y `tetris_score` (leaderboard global, sin `pc_id`) — ver [[Módulo Tetris]]. El Java original no persistía nada (a diferencia de FlipCoin/VROOM, que sí escribían resultados a archivo); ambas tablas son agregados nuevos del port, no una migración de algo que ya existiera.
 
 ## Menú/configuración/calificaciones por teclado + modo consola (2026-08-14)
 

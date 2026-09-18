@@ -75,7 +75,7 @@ model truco_matches {
 }
 ```
 
-Log de resultados, no estado de juego -- mismo criterio que `car_race_results`/`flipcoin_results`. `winner_pc_id` es un `VarChar` suelto (siempre igual a `host_pc_id` o `guest_pc_id`) en vez de una TERCERA relación con `sessions` -- una fila solo necesita dos relaciones nombradas (`truco_matches_host`/`truco_matches_guest`) para poder tener dos FKs distintas al mismo modelo `sessions`; agregar una tercera para `winner_pc_id` habría sido redundante, mismo criterio que `car_race_results.car` (VarChar suelto, no FK).
+Log de resultados, no estado de juego -- mismo criterio que `vroom_results`/`flipcoin_results`. `winner_pc_id` es un `VarChar` suelto (siempre igual a `host_pc_id` o `guest_pc_id`) en vez de una TERCERA relación con `sessions` -- una fila solo necesita dos relaciones nombradas (`truco_matches_host`/`truco_matches_guest`) para poder tener dos FKs distintas al mismo modelo `sessions`; agregar una tercera para `winner_pc_id` habría sido redundante, mismo criterio que `vroom_results.car` (VarChar suelto, no FK).
 
 ## Reuso deliberado de `Módulo Chat`
 

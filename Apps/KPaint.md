@@ -137,7 +137,7 @@ Los botones de herramienta (`.kpaintTool`) siguen el verde monocromático del re
 `kp` está en `model/iconSrc.js`, `formato.js` (`TIPOS.kp = "Dibujo"`), y — a diferencia de `img` — sí en el submenú "Nuevo" de `Folder._abrirSubMenuCrear` y `ContextMenuManager._abrirSubMenuCrear` (un lienzo en blanco tiene sentido, a diferencia de una foto en blanco): mismo patrón que `txt`/`fld`. No está en `filesUndeletable.js` (se puede borrar como cualquier archivo de usuario).
 
 > [!info] También sembrado en `defaultFiles.js` (2026-08-20) — pero sigue siendo un archivo de usuario común
-> A diferencia del resto de entradas de `defaultFiles.js` (Doom/Kmd/Kfruit/KneAI/Maxwell/RecycleBin/Calculator/User/BlackJack/Hangman/FlipCoin/Kdle/CarRace/Tetris/KneChat/Config — todas "fijas": `filesUndeletable` + fuera del menú "Nuevo"), `KPaint` se agregó a `defaultFiles` (`espacio65`, nombre "KPaint") solo para que un escritorio nuevo arranque con un lienzo a mano, sin volverse `filesUndeletable` ni sacarse del menú "Nuevo" — se puede borrar el ícono default y crear otros `kp` libremente, es un lienzo en blanco precargado, no una app-herramienta singleton.
+> A diferencia del resto de entradas de `defaultFiles.js` (Doom/Kmd/Kfruit/KneAI/Maxwell/RecycleBin/Calculator/User/BlackJack/Hangman/FlipCoin/Kdle/VROOM/Tetris/KneChat/Config — todas "fijas": `filesUndeletable` + fuera del menú "Nuevo"), `KPaint` se agregó a `defaultFiles` (`espacio65`, nombre "KPaint") solo para que un escritorio nuevo arranque con un lienzo a mano, sin volverse `filesUndeletable` ni sacarse del menú "Nuevo" — se puede borrar el ícono default y crear otros `kp` libremente, es un lienzo en blanco precargado, no una app-herramienta singleton.
 
 ## Persistencia
 
