@@ -15,7 +15,7 @@ Las 28 apps de escritorio de KneOS (`public/KneOS/js/apps/`). Todas extienden [[
 | [[TxtFile]] | `txt` | Editor de texto enriquecido (negrita/cursiva/subrayado, guardado manual o Ctrl+G) | ninguna (`contentEditable` nativo) |
 | [[Folder]] | `fld` | Explorador de archivos estilo Windows (sidebar, breadcrumb, buscador, vistas, orden, drag&drop) | ninguna |
 | [[KneAI]] | `ai` | Chat con IA estilo ChatGPT, historial de conversaciones, auto-titulado | ninguna (delega el LLM al backend, ver [[Módulo Groq]]) |
-| [[Doom]] | `exe` | Emulador de DOOM vía DOSBox compilado a WASM | **js-dos** |
+| [[Doom]] | `exe` | DOOM shareware original en un iframe, corriendo Chocolate Doom compilado a WASM, 100% local | ninguna (vendorizado en el repo, sin CDN, ex js-dos — reemplazado 2026-09-21) |
 | [[Kmd]] | `kmd` | Terminal estilo CMD sobre el sistema de archivos real (`dir`/`cd`/`mkdir`/`touch`/`rmdir`/`move`/`ren`/`del`/`type`/`echo`/`tree`/`kneai`/`curl`/etc.) | ninguna |
 | [[Kfruit]] | `kfruit` | Juego de fusión de frutas estilo Suika Game, con física real | **planck** (Box2D portado a JS) |
 | [[Maxwell]] | `maxwell` | Visor 3D: carga un `.glb` y lo muestra girando sobre su eje | **Three.js** (import map propio, ver nota en [[Escena 3D]]) |
