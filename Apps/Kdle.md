@@ -44,3 +44,6 @@ La grilla de juego ya era 100% teclado desde 2026-08-13 (ver arriba); el único 
 ## Persistencia
 
 Solo el catálogo de palabras (tabla `palabras`, compartida con Ahorcado, ver [[Módulo Kdle]]) — de solo lectura desde la app. El resto del estado de la partida (intento actual, columna actual, celdas pintadas) vive solo en memoria mientras la ventana está abierta.
+
+> [!info] Tablero centrado y letras más grandes (2026-10-02)
+> `kdle.css`: `.kdleApp` centra el contenido en vertical (`justify-content: safe center`, así si no entra scrollea sin cortar el borde superior); `.kdTablero` pasó de flex a grid `1fr auto 1fr` para que la **grilla** quede en el centro exacto de la ventana con la leyenda en la columna izquierda (antes el conjunto leyenda+grilla estaba centrado y la grilla quedaba corrida a la derecha); celdas `clamp(2.6rem, 11cqw, 5rem)` y letra `clamp(24px, 8cqw, 44px)` con `line-height: 1`. `.kdCelda--muestra` (leyenda) ahora es `.kdCelda.kdCelda--muestra` porque `.kdCelda` está más abajo en el archivo y le pisaba el tamaño; las muestras quedan en 2.2rem/24px y el texto de cada ítem de la leyenda (`.kdLeyendaItem`, antes 13px) también en 24px.

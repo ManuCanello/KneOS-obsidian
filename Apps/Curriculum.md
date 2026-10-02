@@ -32,3 +32,6 @@ Mismo patrón de 4 lugares que cualquier app nueva (ver [[Knefy]]/[[KneOsBrain]]
 ## Pendiente
 
 `CERTIFICATIONS` sigue vacío — Manuel las va a subir más adelante (la sección "Certificaciones" no aparece hasta entonces). `PROFILE.email` ya está confirmado (`canellomanuel2@gmail.com`, 2026-08-25) — distinto del email de la cuenta de Manuel usada para esta sesión de Claude Code, elegido a propósito para el contacto público del CV.
+
+> [!info] Sección Languages (2026-10-02)
+> Tras el rediseño estilo brittanychiang.com, `curriculumData.js` exporta `LANGUAGES = ["Spanish — Native", "English — Fluent (C2)"]` y `Curriculum.js` la renderiza como tags (`_createSection("Languages", ...)`) debajo de Skills, sin entrada en la nav lateral (igual que Skills). [[KneAI]] también la recibe en su `identityBlock()`. El resto de esta nota describe el layout anterior al rediseño.
