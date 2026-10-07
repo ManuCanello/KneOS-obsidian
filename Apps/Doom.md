@@ -36,6 +36,10 @@ Llama `super()` con los parámetros fijos, `size` inicial `4_207_819` (tamaño r
 
 - **`_crearContenido()`**: crea `div.doomContainer` conteniendo un `<iframe src="/KneOS/apps/doom/index.html">` (`allow="autoplay"`, `sandbox="allow-scripts allow-same-origin"`, `aria-label` en vez de `title` — ver Reglas). Todo el arranque del juego (fetch de `doom1.wad`, creación del módulo Emscripten, `callMain`) vive en `public/KneOS/apps/doom/main.js`, corriendo dentro del iframe, no en `Doom.js`.
 
+## Ajuste a la ventana (2026-10-06)
+
+`public/KneOS/apps/doom/styles.css` fijaba el canvas a `100vw × 100vh !important`, así que se estiraba a todo el iframe sin respetar la proporción (en una ventana maximizada de 1433×1048 quedaba 1425×960, ratio 1,48, ensanchado). Ahora el canvas se ajusta a **4:3** (la proporción con la que se veía Doom, píxeles no cuadrados sobre el buffer 320×200) con `min(100vw, 100vh*4/3)` × `min(100vh, 100vw*3/4)` y el `body` lo centra en flex, con barras negras. El `!important` se mantiene porque Emscripten fija el tamaño del canvas con estilos inline.
+
 ## Verificación (2026-09-21)
 
 Probado primero fuera del repo (clon de `OscarRevollo/doom-wasm` en un scratchpad, con el WAD real swapeado) antes de tocar el proyecto real. Ya integrado, corrido con Playwright contra el server local: abre "Juegos" → "Doom" en el escritorio real, la pantalla de título de DOOM (no Freedoom) carga sin errores de consola, y cerrar la ventana saca el iframe del DOM al instante.

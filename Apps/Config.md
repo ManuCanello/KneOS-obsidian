@@ -65,7 +65,7 @@ Así ningún ícono/ventana llega a pintarse en verde de fábrica para después 
 
 ## Ícono de escritorio y borrado
 
-Está en `defaultFiles.js` (`espacio64`, nombre "Config") y en `filesUndeletable` — mismo criterio que el resto de las apps fijas del sistema (Calculator, [[Camera]], KneChat, etc.): no se puede recrear desde el menú "Nuevo" (que solo ofrece `txt`/`fld`), así que borrarla la perdería para siempre.
+Está en `defaultFiles.js` (`espacio31`, nombre "Config") y en `filesUndeletable` — mismo criterio que el resto de las apps fijas del sistema (Calculator, [[Camera]], KneChat, etc.): no se puede recrear desde el menú "Nuevo" (que solo ofrece `txt`/`fld`), así que borrarla la perdería para siempre.
 
 ## Otras apps reactivas al cambio de color
 

@@ -8,7 +8,7 @@ tags:
 
 ⬅️ Volver a [[Apps]]
 
-`public/KneOS/js/apps/RecycleBin.js` — extiende [[File]]. Extensión `"recyclebin"`, ícono propio `sources/appIcon/trash.svg` (SVG con `fill="currentColor"`, pintado por `mask-image` igual que el resto — ver `iconoStyle.js` en [[Frontend Model Services Utils]]), `src = null`, `size = 0`. Está en `filesUndeletable` (ver [[Menús Contextuales]]) y sembrada en `defaultFiles.js` (`espacio61`) — no se puede borrar ni recrear desde "Nuevo".
+`public/KneOS/js/apps/RecycleBin.js` — extiende [[File]]. Extensión `"recyclebin"`, ícono propio `sources/appIcon/trash.svg` (SVG con `fill="currentColor"`, pintado por `mask-image` igual que el resto — ver `iconoStyle.js` en [[Frontend Model Services Utils]]), `src = null`, `size = 0`. Está en `filesUndeletable` (ver [[Menús Contextuales]]) y sembrada en `defaultFiles.js` (`espacio21`) — no se puede borrar ni recrear desde "Nuevo".
 
 > [!abstract] Qué hace
 > Papelera de reciclaje real: todo lo que antes se borraba de una (menú contextual "Eliminar" o tecla `Delete`) ahora hace un soft delete (`deleted_at` en la fila `files`, ver [[Módulo Icon]]) y queda listado acá hasta que se restaura o se elimina definitivamente.

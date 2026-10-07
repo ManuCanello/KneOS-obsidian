@@ -32,7 +32,7 @@ El vault vive fuera del repo y en producción el server no puede leer el disco d
 
 Mismo patrón de 4 lugares que cualquier app nueva (ver [[Knefy]]):
 - `model/iconSrc.js` → `brain: { css: "...", load: () => import("../apps/KneOsBrain.js") }`
-- `model/defaultFiles.js` → `{ desktop_place: "espacio68", ext: "brain", name: "KneOsBrain" }`
+- `model/defaultFiles.js` → `{ desktop_place: "espacio3", ext: "brain", name: "KneOsBrain" }`
 - `model/filesUndeletable.js` → `"brain"` agregado al Set
 - `utils/formato.js` → `brain: "Aplicación"` en `TIPOS`
 

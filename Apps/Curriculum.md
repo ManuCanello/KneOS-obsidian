@@ -23,7 +23,7 @@ Secciones, en orden: header (nombre + tagline), Sobre mí, Experiencia (Xiara de
 
 Mismo patrón de 4 lugares que cualquier app nueva (ver [[Knefy]]/[[KneOsBrain]]):
 - `model/iconSrc.js` → `cv: { css: "...", load: () => import("../apps/Curriculum.js") }`
-- `model/defaultFiles.js` → `{ desktop_place: "espacio69", ext: "cv", name: "Curriculum" }`
+- `model/defaultFiles.js` → `{ desktop_place: "espacio1", ext: "cv", name: "Curriculum" }`
 - `model/filesUndeletable.js` → `"cv"` agregado al Set
 - `utils/formato.js` → `cv: "Aplicación"` en `TIPOS`
 

@@ -111,7 +111,7 @@ Duración y fecha son **botones de orden** (`_crearBotonOrden`, ciclo de 3 estad
 
 ## Registros
 
-Los 5 puntos de siempre (ver plantilla en [[KPaint]]): `model/iconSrc.js` (`knefy` → `Knefy.js`), `model/defaultFiles.js` (`espacio67`, "Knefy"), `model/filesUndeletable.js` (`"knefy"`), `utils/formato.js` (`TIPOS.knefy = "Aplicación"`), `styles/main.css` (`@import 'apps/knefy.css'`). **No** está en el submenú "Nuevo" de `Folder`/`ContextMenuManager` — es una app de sistema, no un documento que se pueda crear en blanco (mismo criterio que [[Config]]/[[Camera]]).
+Los 5 puntos de siempre (ver plantilla en [[KPaint]]): `model/iconSrc.js` (`knefy` → `Knefy.js`), `model/defaultFiles.js` (`espacio62`, "Knefy"), `model/filesUndeletable.js` (`"knefy"`), `utils/formato.js` (`TIPOS.knefy = "Aplicación"`), `styles/main.css` (`@import 'apps/knefy.css'`). **No** está en el submenú "Nuevo" de `Folder`/`ContextMenuManager` — es una app de sistema, no un documento que se pueda crear en blanco (mismo criterio que [[Config]]/[[Camera]]).
 
 ## Estilos
 
