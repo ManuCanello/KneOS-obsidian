@@ -13,15 +13,28 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Backend/Módulo Groq.md",
+                "file": "KneOS Portfolio.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Módulo Groq"
+              "title": "KneOS Portfolio"
+            }
+          },
+          {
+            "id": "67dc5c3a61e3de35",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.14.4"
+              },
+              "icon": "lucide-book-up",
+              "title": "Registro de cambios 1.14.4"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -183,16 +196,16 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "a0e975ef826df478",
+  "active": "67dc5c3a61e3de35",
   "lastOpenFiles": [
+    "Deuda Técnica.md",
+    "Backend/Módulo Groq.md",
     "Backend/Módulo Truco.md",
     "Apps/Truco.md",
     "Escena 3D.md.tmp.17908.3459ca6e06b1",
     "Escena 3D.md.tmp.17908.985bb1943d9d",
     "Escena 3D.md.tmp.28144.6068051e1c1c",
     "Backend/Módulo Guestbook.md",
-    "Backend/Módulo Groq.md",
-    "Deuda Técnica.md",
     "Apps/KneAI.md",
     "Apps.md",
     "Apps/KneChat.md",
