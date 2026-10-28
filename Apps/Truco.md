@@ -211,3 +211,4 @@ Modo offline: ninguna, igual que antes -- el marcador vive solo en memoria mient
 - Al cerrar una mano/ronda (Continuar) se limpia el mensaje del footer de inmediato.
 - `_detener()` suelta los sockets online (necesario cuando corre dentro de Kmd).
 - Ajuste posterior: el texto del mensaje volvió a su tamaño original (22px/15px); solo las cartas quedaron al doble. Online, los snapshots que llegan mientras el invitado envía su jugada se **encolan** (`_online.stateQueue`) en vez de perderse, para que el rival también vea el mensaje del envido.
+- Fix posterior: "No quiero" siempre es la última acción (botón de más a la derecha); al cerrar mano/ronda también se limpia el canal de mensaje secreto del footer. Tamaño de carta final: `clamp(104px, min(22cqw, (100cqh - 245px) / 4.7), 280px)`.
