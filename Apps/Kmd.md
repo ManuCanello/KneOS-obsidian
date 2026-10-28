@@ -134,3 +134,7 @@ El gameplay que siempre fue teclado (letras de Hangman/Kdle, movimiento de Tetri
 ## Estilos
 
 `styles/apps/kmd.css` (nuevo) + `@import` agregado a `main.css`. Sin `font-family` propia (se hereda de `body`, ver [[Reglas]]), sin `text-shadow`, solo `var(--primary-color)`/`var(--primary-background)`.
+
+## `run truco` usa la versión gráfica (2026-10-28)
+
+`_cmdRun` ya no fuerza `_modoTerminal` para `truco`: corre la misma app gráfica que el ícono del escritorio (clic en cartas, online, Truco 2.0, historial de puntos) dentro de `.kmdRunContainer`, para no mantener dos implementaciones. Los demás juegos siguen en modo texto.

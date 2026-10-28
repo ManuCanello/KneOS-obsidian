@@ -79,3 +79,7 @@ El Java original no tenía forma de pausar. `this.pauseKey = "Escape"` (construc
 ## Consumido por
 
 Servicio frontend `TetrisServices` (ver [[Frontend Model Services Utils#Services]]), usado por [[Tetris]].
+
+## Altura (2026-10-28)
+
+El contenedor principal (`menu`, clases `app game tetrisApp mainMenu`) fija `height: 100%` también inline desde `_crearContenido`, además de `.tetrisApp { height: 100% }` en `tetris.css`.
