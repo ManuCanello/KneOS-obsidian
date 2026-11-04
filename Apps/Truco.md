@@ -214,3 +214,5 @@ Modo offline: ninguna, igual que antes -- el marcador vive solo en memoria mient
 - Fix posterior: "No quiero" siempre es la última acción (botón de más a la derecha); al cerrar mano/ronda también se limpia el canal de mensaje secreto del footer. Tamaño de carta final: `clamp(104px, min(22cqw, (100cqh - 245px) / 4.7), 280px)`.
 - Tamaño de carta actual: `clamp(108px, min(23cqw, (100cqh - 238px) / 4.55), 300px)`.
 - El historial de puntos también muestra los puntos de envido de cada mano en los envidos queridos (`envido` en cada entrada de `_scoreLog`, espejado online).
+
+Cambio 2026-11-04: lobby e historial online más grandes (títulos, jugadores, filas, botones y `VOLVER` en `truco.css`; el `VOLVER` de estas pantallas no estaba dentro de `.mainMenu`, por eso era chico).

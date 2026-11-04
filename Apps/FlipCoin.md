@@ -36,3 +36,5 @@ A pedido explícito (jugar desde `run flipcoin` en [[Kmd]]), los tres menús (`_
 ## Persistencia
 
 Tabla `flipcoin_resultados` (ver [[Módulo FlipCoin]]) — cada tirada de "JUGAR" inserta una fila; "VER PORCENTAJE"/"VER HISTORIAL" leen esa tabla. A diferencia de [[Hangman]] (solo lectura desde la app), acá sí hay una escritura por partida jugada.
+
+Cambio 2026-11-04: `.fcHistorial` más grande (fuente `clamp(24px, 5.5cqw, 36px)`, `max-height: 65vh`).

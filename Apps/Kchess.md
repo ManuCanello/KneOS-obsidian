@@ -62,3 +62,5 @@ tags:
 
 > [!warning] Pendiente (igual que el original)
 > Sin enroque ni captura al paso (el rey está en la columna 3, como en el original, así que el enroque no sería el estándar); la coronación es siempre a reina, sin elegir pieza.
+
+Cambio 2026-11-04: sala de espera (lobby) e historial online más grandes; reusan los estilos de `truco.css` (`.kchessLobby` ahora ancho `min(100%, 720px)`).

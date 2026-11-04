@@ -83,3 +83,7 @@ Servicio frontend `TetrisServices` (ver [[Frontend Model Services Utils#Services
 ## Altura (2026-10-28)
 
 El contenedor principal (`menu`, clases `app game tetrisApp mainMenu`) fija `height: 100%` también inline desde `_crearContenido`, además de `.tetrisApp { height: 100% }` en `tetris.css`.
+
+## Sombra de la pieza (agregado 2026-11-04)
+
+En CONFIGURACION, debajo de la tabla de controles, hay un botón `SOMBRA DE LA PIEZA: SI/NO`. `this.sombra` arranca en activa y se guarda por navegador en `localStorage` (`tetrisSombra`, no en BD: es una preferencia visual, sin tabla propia). `_render()` baja la pieza activa hasta donde colisiona (`_puedeMoverse`) y dibuja esa proyección con `.` antes de superponer la pieza real (`1`). Solo en modo gráfico; el modo consola (`run tetris`) la usa activa pero no tiene el toggle.
