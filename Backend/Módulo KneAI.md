@@ -54,3 +54,9 @@ Servicio frontend [[Frontend Model Services Utils#Services|KneAiServices]], usad
 
 > [!info] Endpoint `getMessagesContext` eliminado (2026-07-27)
 > Revisando la Deuda Técnica, se confirmó el bug (`result[0]` en vez del array de `getChatContext`), pero también que **nadie del frontend llamaba a este endpoint**: `KneAiServices` no tiene ningún método hacia `/chat/:chat_id/context`. El contexto real que recibe el LLM lo arma `KneAI.js` en el cliente (un string fijo de instrucciones + `this.chatHistory` en memoria), pasado directo a `window.groq.ask(...)` — nunca pasaba por el backend. Al ser código muerto, se eliminaron la ruta, el controller `getMessagesContext` y el modelo `getChatContext`, en vez de arreglar el bug.
+
+> [!info] Contexto del prompt (2026-11-11)
+> El prompt de `KneAI.js` (`_recibeMessage`) lleva tres bloques: los datos del CV (`identityBlock()`, de `model/curriculumData.js`), y la nota **Arquitectura** del vault (stack + capas de KneOS), leída de `sources/vault/vault.json` por `loadArchitecture()` (un solo fetch cacheado, precargado al abrir la app, wikilinks aplanados a texto). Antes, ante "¿qué tecnologías usa este proyecto?" la IA inventaba un stack (Java/Spring/C#/Next.js) porque `PROJECTS` solo describe los proyectos de trabajo, no KneOS; el prompt ahora le ordena responder sobre KneOS solo con ese bloque. Si falla el fetch, el bloque queda vacío (sin error visible).
+
+> [!warning] Qué NO llega al prompt (2026-11-11)
+> De la nota Arquitectura solo pasan las secciones "Stack tecnológico" y "Capas del backend/frontend" (lista blanca en `loadArchitecture()`); quedan afuera "Dominios expuestos por el backend", el modelo de sesión/JWT y los nombres de tablas (`schema.prisma`). Además el prompt tiene una regla CONFIDENCIAL: la IA no menciona rutas, endpoints, tablas, variables de entorno, claves, tokens, cookies ni manejo de sesión.

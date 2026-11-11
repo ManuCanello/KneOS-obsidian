@@ -13,22 +13,29 @@ tags:
 **Backend**
 - [Express 5](https://expressjs.com/) (ESM) como servidor HTTP y de archivos estáticos
 - [Prisma](https://www.prisma.io/) + PostgreSQL como ORM/base de datos
-- [Groq API](https://groq.com/) (modelo `llama-3.3-70b-versatile`) como proveedor de IA, consumido vía proxy propio para no exponer la API key al cliente
-- `uuid` para generar el identificador de sesión (`pc_id`)
-- `jsonwebtoken` para firmar/verificar el JWT de sesión (2026-07-28, ver [[Módulo Session]])
+- [Groq API](https://groq.com/) (modelo `openai/gpt-oss-120b`) como proveedor de IA, consumido vía proxy propio (`/groq/chat`, con streaming SSE) para no exponer la API key al cliente
+- `uuid` para el identificador de sesión (`pc_id`)
+- `jsonwebtoken` + `cookie-parser` para autenticar los requests
+- `compression` (gzip/brotli) sobre las respuestas, salvo `/groq/chat` (rompería el streaming)
+- `express-rate-limit` para limitar requests
+- `ws` para los WebSocket de KneChat y de los modos ONLINE de Truco y Kchess (sin socket.io)
 - `dotenv` para variables de entorno
 
 **Frontend**
-- JavaScript vanilla con ES Modules, sin bundler — se cargan directo en el navegador vía `<script type="module">` e import maps
-- [Three.js](https://threejs.org/) (+ `OrbitControls`, `GLTFLoader`, `CSS3DRenderer`) para renderizar la PC en 3D y proyectar el escritorio HTML sobre su pantalla — ver [[Escena 3D]]
+- JavaScript vanilla con ES Modules, sin framework — bundleado con esbuild
+- [Three.js](https://threejs.org/) (+ `GLTFLoader`, `CSS3DRenderer`) para renderizar la PC en 3D y proyectar el escritorio HTML sobre su pantalla — ver [[Escena 3D]]
 - [interact.js](https://interactjs.io/) para mover/redimensionar las ventanas del escritorio
-- [js-dos](https://js-dos.com/) para emular DOOM dentro de una ventana ([[Doom]])
-- **planck** (Box2D portado a JS) como motor de física 2D del juego Kfruit ([[Kfruit]])
+- [Chocolate Doom](https://www.chocolate-doom.org/) compilado a WebAssembly, en un iframe y 100% local, para DOOM ([[Doom]])
+- **planck** (Box2D portado a JS) como motor de física 2D de Kfruit ([[Kfruit]])
+- `@mapbox/vector-tile` + `pbf` + `earcut` + `rbush` + `bresenham` para el mapa ([[KneMap]])
 - CSS plano, organizado por módulo
 
 **Infraestructura/build**
-- Sin paso de build: todo se sirve estático desde `public/`
-- `node --watch` para desarrollo (`npm run dev`)
+- **Hosting:** el servidor Node corre en un VPS de Hostinger (plan KVM 1) con Ubuntu
+- `esbuild` bundlea la escena 3D (`public/js/main.js`), el escritorio (`public/KneOS/js/KNEOS.js`) y el CSS, con code-splitting: cada app es un chunk que se descarga recién al abrirla
+- `npm run build` también compila el vault de Obsidian a `vault.json` (`scripts/buildVault.js`), fuente de [[KneOsBrain]] y del contexto de [[KneAI]]
+- Tests end-to-end con Playwright (`npm run test:e2e`)
+- `node --watch` para desarrollo (`npm run dev`); no hay rebuild automático del bundle
 
 ## Capas del backend
 
